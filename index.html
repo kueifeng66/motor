@@ -1,0 +1,3460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Apex Moto GP — Realistic 3D Motorcycle Racing</title>
+  <style>
+    @layer reset, base, components, utilities;
+
+    @layer reset {
+      html, body {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+      }
+      *, *::before, *::after {
+        box-sizing: inherit;
+      }
+      button {
+        font: inherit;
+        color: inherit;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+      }
+    }
+
+    @layer base {
+      :root {
+        color-scheme: dark;
+        --in-oklab: ;
+        --target-size: 28px;
+        --bg-deep: #030712;
+        --bg-panel: #0a1428;
+        --bg-card: #0e1c38;
+        --bg-card-elevated: #152952;
+        --border-neon: #2b8eff;
+        --border-subtle: rgba(56, 189, 248, 0.3);
+        --text-primary: #f8fafc;
+        --text-muted: #94a3b8;
+        --accent-gold: #facc15;
+        --accent-cyan: #38bdf8;
+        --accent-green: #22c55e;
+        --accent-red: #ef4444;
+        --focus-ring: #38bdf8;
+        --radius-lg: 16px;
+        --radius-md: 10px;
+        --radius-sm: 7px;
+      }
+
+      @media (pointer: coarse) {
+        :root {
+          --target-size: 44px;
+        }
+      }
+
+      @supports (background: linear-gradient(in oklab, white, black)) {
+        :root {
+          --in-oklab: in oklab;
+        }
+      }
+
+      body {
+        min-block-size: 100dvh;
+        background:
+          radial-gradient(circle at 18% 12%, rgba(43, 142, 255, 0.22), transparent 46%),
+          radial-gradient(circle at 82% 88%, rgba(56, 189, 248, 0.16), transparent 46%),
+          var(--bg-deep);
+        color: var(--text-primary);
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 6px;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+      }
+
+      h1, h2, h3 {
+        text-wrap: balance;
+      }
+
+      p {
+        text-wrap: pretty;
+      }
+
+      :where(button, a, [tabindex]):focus-visible {
+        outline: 3px solid var(--focus-ring);
+        outline-offset: 2px;
+      }
+    }
+
+    @layer components {
+      .cabinet {
+        inline-size: min(100%, 1080px);
+        container: cabinet / inline-size;
+        background: linear-gradient(to bottom var(--in-oklab), #0c1836 0%, #060d20 100%);
+        border: 2px solid var(--border-neon);
+        border-radius: var(--radius-lg);
+        box-shadow:
+          0 4px 12px rgba(0, 0, 0, 0.6),
+          0 16px 40px rgba(0, 0, 0, 0.75),
+          0 0 36px rgba(43, 142, 255, 0.32),
+          inset 0 1px 0 rgba(255, 255, 255, 0.14);
+        overflow: clip;
+      }
+
+      .cabinet-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: safe center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: max(6px, env(safe-area-inset-top, 6px)) 12px 6px;
+        background: rgba(5, 11, 26, 0.94);
+        border-block-end: 1px solid var(--border-subtle);
+      }
+
+      .window-dots {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .dot {
+        inline-size: 10px;
+        block-size: 10px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+      .dot--red { background: #ef4444; }
+      .dot--yellow { background: #eab308; }
+      .dot--green { background: #22c55e; }
+
+      .brand-title {
+        margin: 0;
+        font-size: 0.9rem;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .header-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: safe center;
+        gap: 6px;
+      }
+
+      .icon-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        min-block-size: max(28px, var(--target-size));
+        min-inline-size: max(28px, var(--target-size));
+        padding: 3px 10px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-subtle);
+        background: var(--bg-card);
+        color: var(--text-primary);
+        font-size: 0.76rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 140ms ease, border-color 140ms ease;
+      }
+
+      .icon-btn:hover:not(:disabled) {
+        background: var(--bg-card-elevated);
+        border-color: var(--accent-cyan);
+      }
+
+      .icon-btn[aria-pressed="true"] {
+        border-color: var(--accent-cyan);
+        background: rgba(56, 189, 248, 0.16);
+      }
+
+      /* Enlarged Main Game Viewport for Maximum Immersion */
+      .viewport-wrap {
+        position: relative;
+        inline-size: 100%;
+        aspect-ratio: 16 / 9.2;
+        min-block-size: clamp(340px, 60dvh, 640px);
+        background: #091326;
+        overflow: clip;
+        border-block-end: 1px solid var(--border-subtle);
+      }
+
+      #gameCanvas {
+        display: block;
+        inline-size: 100%;
+        block-size: 100%;
+        object-fit: cover;
+        touch-action: none;
+      }
+
+      /* Compact In-Viewport HUD */
+      .hud-overlay {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        padding: 8px 10px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .hud-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 8px;
+      }
+
+      .hud-pill {
+        background: rgba(6, 13, 28, 0.68);
+        border: 1px solid rgba(148, 163, 184, 0.32);
+        backdrop-filter: blur(6px);
+        border-radius: 8px;
+        padding: 3px 9px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+      }
+
+      .hud-pill--compact {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .hud-pill--speed {
+        padding: 2px 8px;
+      }
+
+      .hud-pill-row {
+        display: flex;
+        align-items: baseline;
+        gap: 4px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .hud-label {
+        color: #cbd5e1;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+
+      .hud-val-gold {
+        color: var(--accent-gold);
+        font-size: 0.92rem;
+        font-style: italic;
+      }
+
+      .hud-val-white {
+        color: var(--text-primary);
+        font-size: 0.8rem;
+      }
+
+      /* Smaller, Unobtrusive Speed Indicator */
+      .hud-speed-val {
+        color: var(--accent-gold);
+        font-size: 0.92rem;
+        font-style: italic;
+      }
+
+      .hud-route-badge {
+        background: rgba(6, 13, 28, 0.68);
+        border: 1px solid rgba(56, 189, 248, 0.38);
+        backdrop-filter: blur(6px);
+        border-radius: 999px;
+        padding: 2px 10px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--accent-cyan);
+        letter-spacing: 0.02em;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+      }
+
+      .minimap-wrap {
+        position: absolute;
+        inset-inline-end: 10px;
+        inset-block-start: 40px;
+        inline-size: 70px;
+        block-size: 70px;
+        border-radius: 50%;
+        background: rgba(6, 12, 26, 0.76);
+        border: 1.5px solid rgba(203, 213, 225, 0.42);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        overflow: clip;
+      }
+
+      #minimapCanvas {
+        inline-size: 100%;
+        block-size: 100%;
+        display: block;
+      }
+
+      /* Start / Countdown / Finish Overlay */
+      .race-modal {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: safe center;
+        background: rgba(3, 8, 20, 0.76);
+        backdrop-filter: blur(5px);
+        text-align: center;
+        padding: 14px;
+        overflow-y: auto;
+        z-index: 5;
+      }
+
+      .race-modal[hidden] {
+        display: none;
+      }
+
+      .race-modal h2 {
+        margin: 0 0 6px;
+        font-size: clamp(1.25rem, 0.9rem + 1.8vw, 2rem);
+        letter-spacing: 0.04em;
+        color: var(--accent-gold);
+        text-shadow: 0 2px 14px rgba(250, 204, 21, 0.4);
+      }
+
+      .race-modal p {
+        margin: 0 0 12px;
+        color: var(--text-primary);
+        max-inline-size: 52ch;
+        font-size: 0.86rem;
+      }
+
+      .map-picker {
+        display: flex;
+        flex-wrap: wrap;
+        flex-wrap: balance;
+        justify-content: center;
+        gap: 6px;
+        margin: 0 0 10px;
+        max-inline-size: 640px;
+      }
+
+      .map-btn {
+        min-block-size: max(34px, var(--target-size));
+        padding: 6px 12px;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-subtle);
+        background: var(--bg-card);
+        color: var(--text-muted);
+        font-weight: 600;
+        font-size: 0.82rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .map-btn:hover {
+        color: var(--text-primary);
+        border-color: var(--border-neon);
+      }
+
+      .map-btn[aria-pressed="true"] {
+        color: var(--text-primary);
+        border-color: var(--accent-gold);
+        background: var(--bg-card-elevated);
+        box-shadow: 0 0 12px rgba(250, 204, 21, 0.25);
+      }
+
+      .route-swatch {
+        inline-size: 8px;
+        block-size: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        flex-shrink: 0;
+      }
+
+      .primary-btn {
+        min-block-size: max(42px, var(--target-size));
+        padding: 8px 26px;
+        border-radius: 999px;
+        border: 2px solid #60a5fa;
+        background: linear-gradient(to bottom var(--in-oklab), #2563eb 0%, #1d4ed8 100%);
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 0.96rem;
+        cursor: pointer;
+        box-shadow:
+          0 4px 12px rgba(0, 0, 0, 0.4),
+          0 0 22px rgba(37, 99, 235, 0.55);
+        transition: transform 120ms ease, filter 120ms ease;
+      }
+
+      .primary-btn:hover:not(:disabled) {
+        filter: brightness(1.12);
+        transform: translateY(-1px);
+      }
+
+      .primary-btn:active:not(:disabled) {
+        transform: translateY(1px);
+      }
+
+      .countdown-banner {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+        font-size: clamp(2.4rem, 1.5rem + 4vw, 4.8rem);
+        font-weight: 900;
+        font-style: italic;
+        color: var(--accent-gold);
+        text-shadow: 0 4px 24px rgba(0, 0, 0, 0.85), 0 0 30px rgba(250, 204, 21, 0.65);
+        z-index: 4;
+      }
+
+      .countdown-banner[hidden] {
+        display: none;
+      }
+
+      /* Dashboard Panel: Control Panel Moved Upward Directly Below Main Screen */
+      .dashboard {
+        padding: 8px 12px max(12px, env(safe-area-inset-bottom, 12px));
+        display: grid;
+        gap: 8px;
+        background: linear-gradient(to bottom var(--in-oklab), #09132b 0%, #050b1a 100%);
+      }
+
+      /* Controls Bar (Placed at Top of Dashboard for Ergonomic Phone Thumb Reach) */
+      .controls-card {
+        background: linear-gradient(to bottom var(--in-oklab), #102042 0%, #0b1730 100%);
+        border: 1px solid rgba(56, 189, 248, 0.42);
+        border-radius: var(--radius-md);
+        padding: 8px 12px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 4px 12px rgba(0, 0, 0, 0.35);
+      }
+
+      .controls-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-block-end: 6px;
+      }
+
+      .controls-heading {
+        margin: 0;
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--accent-cyan);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .controls-hint {
+        font-size: 0.72rem;
+        color: var(--text-muted);
+      }
+
+      .controls-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .control-cluster {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .control-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+      }
+
+      .key-pair {
+        display: flex;
+        gap: 8px;
+      }
+
+      .key-btn {
+        min-inline-size: 58px;
+        min-block-size: max(44px, var(--target-size));
+        padding: 6px 14px;
+        border-radius: 9px;
+        border: 1px solid rgba(148, 163, 184, 0.5);
+        background: #081226;
+        color: var(--text-primary);
+        font-weight: 800;
+        font-size: 0.92rem;
+        cursor: pointer;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+        touch-action: none;
+        box-shadow: 0 3px 0 rgba(0, 0, 0, 0.65);
+        transition: background-color 80ms ease, border-color 80ms ease, transform 80ms ease;
+      }
+
+      .key-btn--gas {
+        border-color: rgba(34, 197, 94, 0.55);
+        background: rgba(20, 83, 45, 0.38);
+        min-inline-size: 68px;
+      }
+
+      .key-btn--brake {
+        border-color: rgba(239, 68, 68, 0.5);
+        background: rgba(127, 29, 29, 0.32);
+      }
+
+      .key-btn--wide {
+        min-inline-size: 86px;
+        border-color: rgba(250, 204, 21, 0.5);
+        background: rgba(113, 63, 18, 0.32);
+      }
+
+      .key-btn.is-active,
+      .key-btn:active {
+        background: rgba(43, 142, 255, 0.42);
+        border-color: var(--accent-cyan);
+        transform: translateY(1px);
+      }
+
+      .control-caption {
+        font-size: 0.68rem;
+        color: var(--text-muted);
+        font-weight: 600;
+      }
+
+      /* Quick Route Selector Bar */
+      .route-bar {
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        padding: 6px 10px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: safe center;
+        justify-content: space-between;
+        gap: 6px;
+      }
+
+      .route-bar-label {
+        font-size: 0.74rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .route-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+      }
+
+      .route-pill-btn {
+        min-block-size: max(30px, var(--target-size));
+        padding: 3px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(148, 163, 184, 0.32);
+        background: #081226;
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: border-color 120ms ease, color 120ms ease, background-color 120ms ease;
+      }
+
+      .route-pill-btn:hover {
+        color: var(--text-primary);
+        border-color: var(--accent-cyan);
+      }
+
+      .route-pill-btn[aria-pressed="true"] {
+        color: var(--text-primary);
+        border-color: var(--accent-gold);
+        background: var(--bg-card-elevated);
+      }
+
+      /* Compact Telemetry & Smaller Speedometer Strip at Bottom */
+      .telemetry-grid {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        align-items: stretch;
+        gap: 8px;
+      }
+
+      .gauge-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        padding: 4px 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      }
+
+      #speedoCanvas {
+        inline-size: 118px;
+        max-inline-size: 118px;
+        block-size: auto;
+        display: block;
+      }
+
+      .stats-stack {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+      }
+
+      .stat-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        padding: 6px 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-inline-size: 0;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      }
+
+      .stat-icon {
+        inline-size: 20px;
+        block-size: 20px;
+        flex-shrink: 0;
+        color: var(--accent-gold);
+      }
+
+      .stat-icon--flag {
+        color: var(--text-primary);
+      }
+
+      .stat-icon--clock {
+        color: var(--accent-cyan);
+      }
+
+      .stat-info {
+        display: flex;
+        flex-direction: column;
+        min-inline-size: 0;
+      }
+
+      .stat-label {
+        font-size: 0.68rem;
+        color: var(--text-muted);
+        font-weight: 600;
+      }
+
+      .stat-value {
+        font-size: 0.98rem;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+        color: var(--text-primary);
+        line-height: 1.15;
+      }
+
+      .stat-value--gold {
+        color: var(--accent-gold);
+      }
+
+      .visually-hidden:where(:not(:focus-within, :active)) {
+        position: absolute !important;
+        clip-path: inset(50%) !important;
+        overflow: hidden !important;
+        inline-size: 1px !important;
+        block-size: 1px !important;
+        margin: -1px !important;
+        padding: 0 !important;
+        border: 0 !important;
+        white-space: nowrap !important;
+      }
+
+      @container cabinet (inline-size < 560px) {
+        .telemetry-grid {
+          grid-template-columns: auto 1fr;
+        }
+        #speedoCanvas {
+          inline-size: 96px;
+          max-inline-size: 96px;
+        }
+        .stat-card {
+          padding: 4px 7px;
+          gap: 5px;
+        }
+        .stat-icon {
+          inline-size: 16px;
+          block-size: 16px;
+        }
+        .stat-value {
+          font-size: 0.85rem;
+        }
+        .minimap-wrap {
+          inline-size: 56px;
+          block-size: 56px;
+          inset-block-start: 36px;
+        }
+        .key-btn {
+          min-inline-size: 56px;
+          min-block-size: 50px;
+          padding: 6px 12px;
+        }
+        .key-btn--wide {
+          min-inline-size: 72px;
+        }
+      }
+
+      @media (max-width: 640px) {
+        body {
+          padding: 0;
+        }
+        .cabinet {
+          border-radius: 0;
+          border-inline: none;
+        }
+        .viewport-wrap {
+          aspect-ratio: auto;
+          block-size: clamp(320px, 53dvh, 470px);
+          min-block-size: 320px;
+        }
+      }
+
+      @media (forced-colors: active) {
+        .cabinet,
+        .gauge-card,
+        .stat-card,
+        .controls-card,
+        .route-bar,
+        .hud-pill,
+        .key-btn,
+        .icon-btn,
+        .primary-btn {
+          border: 1px solid CanvasText;
+        }
+        .key-btn.is-active {
+          outline: 2px solid Highlight;
+        }
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="cabinet" aria-label="Apex Moto GP Racing Game">
+    <header class="cabinet-header">
+      <div class="window-dots" aria-hidden="true">
+        <span class="dot dot--red"></span>
+        <span class="dot dot--yellow"></span>
+        <span class="dot dot--green"></span>
+      </div>
+      <h1 class="brand-title">
+        <span>APEX MOTO GP</span>
+      </h1>
+      <div class="header-actions">
+        <button type="button" id="routesMenuBtn" class="icon-btn" aria-label="Choose route and difficulty">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+            <path d="M9 20l-5.447-2.724A1 1 0 0 1 3 16.382V5.618a1 1 0 0 1 1.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0 0 21 18.382V7.618a1 1 0 0 0-.553-.894L15 4m0 13V4m0 0L9 7"/>
+          </svg>
+          <span>Routes</span>
+        </button>
+        <button type="button" id="soundToggleBtn" class="icon-btn" aria-pressed="true" aria-label="Toggle engine sound">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+          </svg>
+          <span id="soundLabel">Sound On</span>
+        </button>
+        <button type="button" id="restartBtn" class="icon-btn" aria-label="Restart race">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+            <path d="M3 12a9 9 0 1 0 3-6.7L3 8"/>
+            <path d="M3 3v5h5"/>
+          </svg>
+          <span>Restart</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="viewport-wrap">
+      <canvas id="gameCanvas" width="1024" height="600" aria-label="Motorcycle race track"></canvas>
+
+      <div class="hud-overlay" aria-hidden="true">
+        <div class="hud-top">
+          <div class="hud-pill hud-pill--compact">
+            <div class="hud-pill-row">
+              <span class="hud-label">Pos</span>
+              <span id="hudPos" class="hud-val-gold">1</span>
+              <span class="hud-val-white">/6</span>
+            </div>
+            <div class="hud-pill-row">
+              <span class="hud-label">Lap</span>
+              <span id="hudLap" class="hud-val-white">1/3</span>
+            </div>
+          </div>
+
+          <div id="hudRouteBadge" class="hud-route-badge">Route 1: Alpine Pass</div>
+
+          <div class="hud-pill hud-pill--speed">
+            <div class="hud-pill-row">
+              <span class="hud-label">Spd</span>
+              <span id="hudSpeed" class="hud-speed-val">0</span>
+              <span class="hud-val-white">km/h</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="minimap-wrap">
+          <canvas id="minimapCanvas" width="98" height="98"></canvas>
+        </div>
+      </div>
+
+      <div id="countdownBanner" class="countdown-banner" hidden aria-hidden="true">3</div>
+
+      <div id="raceModal" class="race-modal" role="dialog" aria-labelledby="modalTitle">
+        <h2 id="modalTitle">APEX MOTO GP</h2>
+        <p id="modalDesc">Choose from 6 world routes and 3 layout modes, plus live mid-lap route forks (Speed Lane vs Jump Shortcut).</p>
+        <div id="mapPicker" class="map-picker" role="group" aria-label="Choose a route (or press M)"></div>
+        <div id="diffPicker" class="map-picker" role="group" aria-label="Choose a route layout difficulty (or press N)"></div>
+        <button type="button" id="startBtn" class="primary-btn">Start Race</button>
+      </div>
+    </div>
+
+    <section class="dashboard" aria-label="Controls, Routes, and Telemetry">
+      <div class="controls-card">
+        <div class="controls-header-row">
+          <h2 class="controls-heading">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+            </svg>
+            Controls
+          </h2>
+          <span class="controls-hint">Slide thumb to steer · Multi-touch ready</span>
+        </div>
+        <div class="controls-row">
+          <div class="control-group" id="steerTouchZone">
+            <div class="key-pair">
+              <button type="button" class="key-btn" data-control="left" aria-label="Steer Left (A or Left Arrow)">◀ A</button>
+              <button type="button" class="key-btn" data-control="right" aria-label="Steer Right (D or Right Arrow)">D ▶</button>
+            </div>
+            <span class="control-caption">Steer Left / Right</span>
+          </div>
+
+          <div class="control-cluster">
+            <div class="control-group">
+              <button type="button" class="key-btn key-btn--gas" data-control="up" aria-label="Accelerate (W or Up Arrow)">▲ Gas</button>
+              <span class="control-caption">Accelerate</span>
+            </div>
+
+            <div class="control-group">
+              <button type="button" class="key-btn key-btn--brake" data-control="down" aria-label="Brake (S or Down Arrow)">▼ Brake</button>
+              <span class="control-caption">Brake</span>
+            </div>
+
+            <div class="control-group">
+              <button type="button" class="key-btn key-btn--wide" data-control="jump" aria-label="Jump (Spacebar)">⤒ Jump</button>
+              <span class="control-caption">Jump (Space)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="route-bar" aria-label="Quick Route Switcher">
+        <span class="route-bar-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+            <circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/>
+          </svg>
+          Routes:
+        </span>
+        <div id="quickRouteBar" class="route-pills" role="group" aria-label="Select racing route"></div>
+      </div>
+
+      <div class="telemetry-grid">
+        <div class="gauge-card">
+          <canvas id="speedoCanvas" width="140" height="86" aria-label="Compact speedometer gauge"></canvas>
+        </div>
+
+        <div class="stats-stack">
+          <div class="stat-card">
+            <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94A5.01 5.01 0 0 0 11 15.9V19H7v2h10v-2h-4v-3.1a5.01 5.01 0 0 0 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/>
+            </svg>
+            <div class="stat-info">
+              <span class="stat-label">Position</span>
+              <span id="dashPos" class="stat-value stat-value--gold">1 / 6</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <svg class="stat-icon stat-icon--flag" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6h-5.6z"/>
+            </svg>
+            <div class="stat-info">
+              <span class="stat-label">Lap</span>
+              <span id="dashLap" class="stat-value">1 / 3</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <svg class="stat-icon stat-icon--clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+              <circle cx="12" cy="12" r="9"/>
+              <path d="M12 7v5l3 2"/>
+            </svg>
+            <div class="stat-info">
+              <span class="stat-label">Time</span>
+              <span id="dashTime" class="stat-value">00:00.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div id="liveAnnouncer" class="visually-hidden" aria-live="polite"></div>
+  </main>
+
+  <script>
+    (() => {
+      'use strict';
+
+      // Prevent long-press context menus / text selection on mobile buttons
+      document.addEventListener('contextmenu', (e) => {
+        if (e.target.closest('button')) {
+          e.preventDefault();
+        }
+      });
+
+      // --- DOM References ---
+      const gameCanvas = document.getElementById('gameCanvas');
+      const ctx = gameCanvas.getContext('2d');
+      const minimapCanvas = document.getElementById('minimapCanvas');
+      const mCtx = minimapCanvas.getContext('2d');
+      const speedoCanvas = document.getElementById('speedoCanvas');
+      const sCtx = speedoCanvas.getContext('2d');
+
+      const hudPos = document.getElementById('hudPos');
+      const hudLap = document.getElementById('hudLap');
+      const hudSpeed = document.getElementById('hudSpeed');
+      const hudRouteBadge = document.getElementById('hudRouteBadge');
+      const dashPos = document.getElementById('dashPos');
+      const dashLap = document.getElementById('dashLap');
+      const dashTime = document.getElementById('dashTime');
+
+      const raceModal = document.getElementById('raceModal');
+      const modalTitle = document.getElementById('modalTitle');
+      const modalDesc = document.getElementById('modalDesc');
+      const startBtn = document.getElementById('startBtn');
+      const restartBtn = document.getElementById('restartBtn');
+      const routesMenuBtn = document.getElementById('routesMenuBtn');
+      const soundToggleBtn = document.getElementById('soundToggleBtn');
+      const soundLabel = document.getElementById('soundLabel');
+      const countdownBanner = document.getElementById('countdownBanner');
+      const liveAnnouncer = document.getElementById('liveAnnouncer');
+
+      // --- Road & Track Constants ---
+      const SEGMENT_LEN = 200;
+      const ROAD_WIDTH = 1180;
+      const CAMERA_HEIGHT = 960;
+      const CAMERA_DEPTH = 0.84;
+      const PLAYER_CAM_DIST = 852; // Exact distance where road projects to playerScreenY (H - 16)
+      const PLAYER_SCALE = 2.25;   // Foreground hero scale at PLAYER_CAM_DIST
+      const DRAW_DISTANCE = 230;
+      const TOTAL_LAPS = 3;
+      const MAX_SPEED_WORLD = 14800; // maps to 200 km/h
+      const ACCEL = 5900;
+      const BRAKE_DECEL = 11800;
+      const NATURAL_DECEL = 2350;
+      const OFFROAD_DECEL = 6800;
+
+      // --- 6 Distinct Routes --- sections: [length, curve, hill, isTunnel]
+      const MAPS = [
+        { name: 'Alpine Pass', shortName: '1. Alpine Pass', swatch: '#22c55e', skyTheme: 'alpine',
+          blurb: 'Pine forests, a sweeping alpine climb, a mid-lap route fork, and a stone mountain tunnel.',
+          sections: [[42, 0, 0], [52, 2.2, 680], [40, 0.4, 0, 1], [56, -2.7, -520], [44, 1.9, 420], [52, -1.6, 0], [38, 0, 0]],
+          trees: ['pineA', 'pineB'], rocks: true, ev: 3, floor: '#1b4325',
+          grass: ['#245830', '#1d4927'], shoulder: ['#57534e', '#44403c'], road: ['#384152', '#313948'],
+          edge: '#e2e8f0', lane: '#f8fafc' },
+        { name: 'Coastal Riviera', shortName: '2. Coastal Bay', swatch: '#06b6d4', skyTheme: 'coastal',
+          blurb: 'Sun-drenched turquoise bay, palm-lined coastal boulevards, and sweeping high-speed ocean cliffs.',
+          sections: [[46, 0, 0], [62, 1.4, 240], [48, 2.5, -200], [54, -1.9, 320], [58, 1.7, -260], [44, -1.2, 0], [40, 0, 0]],
+          trees: ['palm', 'palm'], rocks: true, ev: 4, floor: '#155e63',
+          grass: ['#2a786c', '#206358'], shoulder: ['#d6b888', '#c2a372'], road: ['#3b495e', '#323f52'],
+          edge: '#67e8f9', lane: '#f8fafc', tint: 'rgba(56, 189, 248, 0.05)' },
+        { name: 'Dragon Hairpins', shortName: '3. Hairpins', swatch: '#f43f5e', skyTheme: 'sunset',
+          blurb: 'Technical sunset touge with relentless S-curve switchbacks, steep ridge drops, and twin cliff tunnels.',
+          sections: [[34, 0, 0], [36, 3.3, 520], [36, -3.4, -440], [32, 2.7, 0, 1], [36, -3.3, -520], [36, 3.2, 480], [32, -2.5, 0, 1], [36, 2.3, -240], [32, 0, 0]],
+          trees: ['pineA', 'pineB'], rocks: true, ev: 3, floor: '#2b192e',
+          grass: ['#382039', '#2d182e'], shoulder: ['#57414d', '#46333e'], road: ['#2e293a', '#262130'],
+          edge: '#fda4af', lane: '#fde047', tint: 'rgba(244, 63, 94, 0.08)' },
+        { name: 'Red Rock Canyon', shortName: '4. Red Canyon', swatch: '#f97316', skyTheme: 'canyon',
+          blurb: 'Blazing sandstone mesas, saguaro cactus valleys, roller-coaster canyon dips, and big air ramps.',
+          sections: [[45, 0, 0], [58, 1.5, 520], [45, -2.3, -480], [42, 0.3, -380], [54, 2.7, 360], [50, -1.6, 520], [40, 0, 0]],
+          trees: ['cactus', 'cactus'], rocks: true, ev: 5, floor: '#b86b35',
+          grass: ['#c97a3e', '#b56931'], shoulder: ['#944e27', '#7f411f'], road: ['#47403b', '#3d3732'],
+          edge: '#fef3c7', lane: '#fde68a', tint: 'rgba(255, 150, 60, 0.08)' },
+        { name: 'Neon Cyber Loop', shortName: '5. Neon Night', swatch: '#a855f7', skyTheme: 'night',
+          blurb: 'Midnight cyber-expressway with glowing neon barriers, skyscraper skyline, and an illuminated light-tunnel.',
+          sections: [[42, 0, 0], [40, 2.2, 0], [40, -2.2, 0], [50, 0.2, 280, 1], [42, -3.0, -240], [42, 2.5, 0], [42, -1.1, 0], [34, 0, 0]],
+          trees: ['neonPylon', 'pineA'], rocks: false, ev: 4, floor: '#071422',
+          grass: ['#0a1b2e', '#071422'], shoulder: ['#1e1b4b', '#17153b'], road: ['#171c2e', '#121625'],
+          edge: '#22d3ee', lane: '#f0abfc', tint: 'rgba(8, 12, 42, 0.32)', night: 1 },
+        { name: 'Glacier Peak', shortName: '6. Glacier Peak', swatch: '#38bdf8', skyTheme: 'glacier',
+          blurb: 'Snow-covered high-altitude switchbacks, aurora sky, icy crests, and dual avalanche galleries.',
+          sections: [[40, 0, 0], [48, -2.0, 440], [38, 0.4, 0, 1], [52, 2.6, -480], [46, -2.5, 360], [36, 1.6, 0, 1], [44, -1.1, 0], [38, 0, 0]],
+          trees: ['snowPine', 'snowPine'], rocks: true, ev: 3, floor: '#cfe0f0',
+          grass: ['#dceaf7', '#cdddf0'], shoulder: ['#8496b0', '#73859e'], road: ['#424d60', '#394354'],
+          edge: '#ffffff', lane: '#bae6fd', tint: 'rgba(186, 230, 253, 0.12)' }
+      ];
+      let currentMap = 0;
+      let P = MAPS[0];
+
+      // --- Difficulties / Route Layout Modes ---
+      const DIFFS = [
+        { name: 'Flow Route (Easy)', tag: 'wider flowing turns, gentler hills & slower rivals', rival: 0.86,
+          haz: [0.18, 0.44, 0.68, 0.88],
+          route: s => s.map(([l, c, h, t]) => [Math.round(l * 1.15), c * 0.55, h * 0.55, t]) },
+        { name: 'GP Circuit (Normal)', tag: 'the championship route layout', rival: 1,
+          haz: [0.11, 0.24, 0.38, 0.56, 0.69, 0.81, 0.92],
+          route: s => s },
+        { name: 'Reverse Chicane (Hard)', tag: 'mirrored reverse route with tight hairpin chicane & fast rivals', rival: 1.06,
+          haz: [0.08, 0.17, 0.26, 0.35, 0.45, 0.55, 0.64, 0.73, 0.82, 0.9, 0.95],
+          route: s => {
+            const r = s.slice().reverse().map(([l, c, h, t]) => [Math.round(l * 0.9), -c * 1.32, -h * 1.25, t]);
+            r.splice(r.length - 1, 0, [22, 3.3, 0], [22, -3.3, 0], [22, 3.3, 0]);
+            return r;
+          } }
+      ];
+      let currentDiff = 1;
+
+      // --- Game State ---
+      const input = { left: false, right: false, up: false, down: false, jump: false };
+      let segments = [];
+      let trackLength = 0;
+      let minimapPoints = [];
+      let rivals = [];
+      let obstacles = [];
+      let particles = [];
+      let forkStartIdx = 0;
+      let forkEndIdx = 0;
+      let activeBranch = 'main'; // 'main' | 'left' | 'right'
+
+      let gameState = 'menu'; // 'menu' | 'countdown' | 'racing' | 'finished'
+      let countdownTimer = 0;
+      let lastCountdownText = '';
+      let raceTime = 0;
+
+      // Player physics
+      let playerZ = 0;
+      let playerTotalZ = 0;
+      let playerX = 0;
+      let playerY = 0;
+      let playerVy = 0;
+      let speed = 0;
+      let steerLean = 0;
+      let riderHangOff = 0;
+      let currentLap = 1;
+      let currentRank = 1;
+      let jumpCooldown = 0;
+      let hitFlash = 0;
+      let boostTimer = 0;
+      let wheelPhase = 0;
+
+      // --- Pre-rendered Realistic Environment Assets (Offscreen Canvases) ---
+      let skyPanoramaCanvas = null;
+      const skyCache = {};
+      let pineSpriteA = null;
+      let pineSpriteB = null;
+      let snowPineSprite = null;
+      let palmSprite = null;
+      let neonPylonSprite = null;
+      let boulderSprite = null;
+      let cactusSprite = null;
+
+      function seededRandom(seed) {
+        let s = seed % 2147483647;
+        if (s <= 0) s += 2147483646;
+        return () => {
+          s = (s * 16807) % 2147483647;
+          return (s - 1) / 2147483646;
+        };
+      }
+
+      function createCactusSprite(w, h) {
+        const c = document.createElement('canvas');
+        c.width = w;
+        c.height = h;
+        const g = c.getContext('2d');
+        g.lineCap = 'round';
+        g.lineJoin = 'round';
+        const limb = (pts, lw, col) => {
+          g.strokeStyle = col;
+          g.lineWidth = lw;
+          g.beginPath();
+          g.moveTo(pts[0], pts[1]);
+          for (let i = 2; i < pts.length; i += 2) g.lineTo(pts[i], pts[i + 1]);
+          g.stroke();
+        };
+        [[26, '#2f6b3a'], [15, '#3f8a4a'], [5, '#74c47b']].forEach(([lw, col]) => {
+          limb([w * 0.5, h * 0.98, w * 0.5, h * 0.08], lw, col);
+          limb([w * 0.5, h * 0.62, w * 0.22, h * 0.62, w * 0.22, h * 0.34], lw * 0.62, col);
+          limb([w * 0.5, h * 0.48, w * 0.78, h * 0.48, w * 0.78, h * 0.22], lw * 0.62, col);
+        });
+        return c;
+      }
+
+      function createPalmSprite(w, h) {
+        const c = document.createElement('canvas');
+        c.width = w;
+        c.height = h;
+        const g = c.getContext('2d');
+        const cx = w * 0.52;
+        const topX = w * 0.44;
+        const topY = h * 0.22;
+
+        // Curved trunk
+        g.lineCap = 'round';
+        g.strokeStyle = '#5c4028';
+        g.lineWidth = 14;
+        g.beginPath();
+        g.moveTo(cx, h * 0.96);
+        g.quadraticCurveTo(w * 0.38, h * 0.58, topX, topY);
+        g.stroke();
+
+        g.strokeStyle = '#855d3b';
+        g.lineWidth = 7;
+        g.beginPath();
+        g.moveTo(cx - 2, h * 0.95);
+        g.quadraticCurveTo(w * 0.37, h * 0.58, topX - 1, topY);
+        g.stroke();
+
+        // Palm fronds
+        const fronds = [
+          [-72, -12, -38, -28],
+          [-66, 22, -35, -6],
+          [-42, 48, -22, 12],
+          [68, -14, 34, -28],
+          [72, 20, 36, -6],
+          [46, 46, 22, 12],
+          [4, -52, 0, -28]
+        ];
+        fronds.forEach(([dx, dy, qx, qy], idx) => {
+          g.strokeStyle = idx % 2 === 0 ? '#15803d' : '#22c55e';
+          g.lineWidth = 9;
+          g.beginPath();
+          g.moveTo(topX, topY);
+          g.quadraticCurveTo(topX + qx, topY + qy, topX + dx, topY + dy);
+          g.stroke();
+        });
+        return c;
+      }
+
+      function createNeonPylonSprite(w, h) {
+        const c = document.createElement('canvas');
+        c.width = w;
+        c.height = h;
+        const g = c.getContext('2d');
+        const cx = w / 2;
+
+        // Metallic dark pylon post
+        g.fillStyle = '#0f172a';
+        g.fillRect(cx - 7, h * 0.1, 14, h * 0.86);
+
+        // Glowing cyan/magenta light bars
+        const glow = g.createRadialGradient(cx, h * 0.35, 4, cx, h * 0.35, 52);
+        glow.addColorStop(0, 'rgba(34, 211, 238, 0.85)');
+        glow.addColorStop(0.5, 'rgba(217, 70, 239, 0.35)');
+        glow.addColorStop(1, 'rgba(34, 211, 238, 0)');
+        g.fillStyle = glow;
+        g.fillRect(0, 0, w, h);
+
+        g.fillStyle = '#22d3ee';
+        g.fillRect(cx - 3, h * 0.14, 6, h * 0.55);
+        g.fillStyle = '#f0abfc';
+        g.fillRect(cx - 16, h * 0.16, 32, 6);
+        g.fillRect(cx - 12, h * 0.28, 24, 5);
+        return c;
+      }
+
+      function getSkyPanorama(theme = 'alpine') {
+        if (skyCache[theme]) return skyCache[theme];
+        const PW = 2048;
+        const PH = 360;
+        const canvas = document.createElement('canvas');
+        canvas.width = PW;
+        canvas.height = PH;
+        const pCtx = canvas.getContext('2d');
+        const rng = seededRandom(4207 + theme.length * 97);
+
+        const palettes = {
+          alpine: {
+            sky: ['#0f3c8a', '#286ed6', '#69a9f5', '#bfdcf9', '#dcebf7'],
+            sun: ['rgba(255, 253, 235, 0.92)', 'rgba(254, 240, 195, 0.45)'],
+            far: ['#385076', '#5c7ba6'], mid: ['#283d58', '#42607c'],
+            snowAlpha: 0.95, treeA: '#183f25', treeB: '#215230'
+          },
+          coastal: {
+            sky: ['#0284c7', '#0ea5e9', '#38bdf8', '#bae6fd', '#fef9c3'],
+            sun: ['rgba(255, 251, 205, 0.96)', 'rgba(253, 224, 71, 0.48)'],
+            far: ['#0f766e', '#14b8a6'], mid: ['#0369a1', '#0284c7'],
+            snowAlpha: 0.2, treeA: '#0f5132', treeB: '#15803d', ocean: true
+          },
+          sunset: {
+            sky: ['#1e1b4b', '#581c87', '#be123c', '#f97316', '#fde047'],
+            sun: ['rgba(254, 240, 138, 0.95)', 'rgba(251, 113, 133, 0.55)'],
+            far: ['#3b0764', '#6b21a8'], mid: ['#2e1065', '#4c1d95'],
+            snowAlpha: 0.45, treeA: '#1f122b', treeB: '#2e1836'
+          },
+          canyon: {
+            sky: ['#7c2d12', '#c2410c', '#ea580c', '#fb923c', '#fed7aa'],
+            sun: ['rgba(255, 247, 214, 0.92)', 'rgba(251, 146, 60, 0.5)'],
+            far: ['#7c2d12', '#b45309'], mid: ['#6c240c', '#9a3412'],
+            snowAlpha: 0.0, treeA: '#78350f', treeB: '#92400e', mesa: true
+          },
+          night: {
+            sky: ['#020617', '#090d26', '#1e1b4b', '#311042', '#0f172a'],
+            sun: ['rgba(34, 211, 238, 0.45)', 'rgba(168, 85, 247, 0.25)'],
+            far: ['#0f172a', '#1e293b'], mid: ['#090d16', '#1e1b4b'],
+            snowAlpha: 0.2, treeA: '#090d16', treeB: '#111827', city: true
+          },
+          glacier: {
+            sky: ['#082f49', '#0369a1', '#38bdf8', '#bae6fd', '#f0f9ff'],
+            sun: ['rgba(240, 253, 250, 0.92)', 'rgba(125, 211, 252, 0.5)'],
+            far: ['#475569', '#94a3b8'], mid: ['#334155', '#64748b'],
+            snowAlpha: 1.0, treeA: '#cbd5e1', treeB: '#94a3b8'
+          }
+        };
+        const pal = palettes[theme] || palettes.alpine;
+
+        // 1. Atmospheric sky gradient
+        const skyG = pCtx.createLinearGradient(0, 0, 0, PH);
+        skyG.addColorStop(0, pal.sky[0]);
+        skyG.addColorStop(0.36, pal.sky[1]);
+        skyG.addColorStop(0.7, pal.sky[2]);
+        skyG.addColorStop(0.9, pal.sky[3]);
+        skyG.addColorStop(1, pal.sky[4]);
+        pCtx.fillStyle = skyG;
+        pCtx.fillRect(0, 0, PW, PH);
+
+        // Sun / Moon glow
+        const sunX = PW * 0.62;
+        const sunY = PH * 0.24;
+        const sunG = pCtx.createRadialGradient(sunX, sunY, 8, sunX, sunY, 340);
+        sunG.addColorStop(0, pal.sun[0]);
+        sunG.addColorStop(0.25, pal.sun[1]);
+        sunG.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        pCtx.fillStyle = sunG;
+        pCtx.fillRect(0, 0, PW, PH);
+
+        // 2. Clouds (for day/sunset/glacier themes)
+        if (!pal.city) {
+          for (let c = 0; c < 12; c++) {
+            const cx = (c / 12) * PW + rng() * 90;
+            const cy = 58 + rng() * 90;
+            const scaleW = 0.75 + rng() * 0.7;
+            const scaleH = 0.7 + rng() * 0.55;
+            for (const wrap of [0, -PW, PW]) {
+              const x0 = cx + wrap;
+              if (x0 + scaleW * 120 < 0 || x0 - scaleW * 120 > PW) continue;
+              for (let i = 0; i < 14; i++) {
+                const ox = (rng() - 0.5) * 125 * scaleW;
+                const oy = (rng() - 0.55) * 40 * scaleH;
+                const r = (18 + rng() * 28) * scaleW;
+                const cg = pCtx.createRadialGradient(x0 + ox, cy + oy, r * 0.1, x0 + ox, cy + oy, r);
+                cg.addColorStop(0, theme === 'sunset' ? 'rgba(254, 215, 170, 0.75)' : 'rgba(255, 255, 255, 0.88)');
+                cg.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                pCtx.fillStyle = cg;
+                pCtx.beginPath();
+                pCtx.arc(x0 + ox, cy + oy, r, 0, Math.PI * 2);
+                pCtx.fill();
+              }
+            }
+          }
+        }
+
+        // 3. Distant Range / Skyline / Ocean
+        const steps = 256;
+        const farPeaks = [];
+        const midPeaks = [];
+        for (let i = 0; i <= steps; i++) {
+          const t = (i / steps) * Math.PI * 2;
+          let hFar = Math.sin(t * 3) * 58 + Math.cos(t * 7 + 1.2) * 38 + Math.sin(t * 15 + 0.5) * 18;
+          let hMid = Math.sin(t * 4 + 2.1) * 46 + Math.cos(t * 9 + 0.4) * 28 + Math.sin(t * 19 + 1.7) * 14;
+          if (pal.mesa) {
+            // Flat-topped canyon mesas
+            hFar = Math.min(72, Math.round(Math.abs(hFar) / 24) * 24);
+            hMid = Math.min(54, Math.round(Math.abs(hMid) / 18) * 18);
+          } else if (pal.ocean) {
+            hFar = Math.abs(hFar) * 0.42;
+            hMid = Math.abs(hMid) * 0.25;
+          }
+          farPeaks.push(PH - 138 - Math.abs(hFar));
+          midPeaks.push(PH - 86 - Math.abs(hMid));
+        }
+
+        function renderMountainLayer(heights, baseDark, baseLight, snowThreshold, snowAlpha) {
+          const dx = PW / steps;
+          for (let i = 0; i < steps; i++) {
+            const x1 = i * dx;
+            const x2 = (i + 1) * dx;
+            const y1 = heights[i];
+            const y2 = heights[i + 1];
+            const isSunlit = (y2 - y1) < 0.4;
+            const rockG = pCtx.createLinearGradient(x1, Math.min(y1, y2), x1, PH);
+            rockG.addColorStop(0, isSunlit ? baseLight : baseDark);
+            rockG.addColorStop(1, baseDark);
+            pCtx.fillStyle = rockG;
+            pCtx.beginPath();
+            pCtx.moveTo(x1, y1);
+            pCtx.lineTo(x2 + 0.8, y2);
+            pCtx.lineTo(x2 + 0.8, PH);
+            pCtx.lineTo(x1, PH);
+            pCtx.closePath();
+            pCtx.fill();
+
+            const avgY = (y1 + y2) * 0.5;
+            if (snowAlpha > 0 && avgY < snowThreshold) {
+              const snowDepth = (snowThreshold - avgY) * 1.15 + rng() * 12;
+              pCtx.fillStyle = `rgba(255, 255, 255, ${snowAlpha * 0.75})`;
+              pCtx.beginPath();
+              pCtx.moveTo(x1, y1);
+              pCtx.lineTo(x2 + 0.8, y2);
+              pCtx.lineTo(x2 + 0.8, y2 + snowDepth);
+              pCtx.lineTo(x1, y1 + snowDepth);
+              pCtx.closePath();
+              pCtx.fill();
+            }
+          }
+        }
+
+        renderMountainLayer(farPeaks, pal.far[0], pal.far[1], PH - 140, pal.snowAlpha);
+        renderMountainLayer(midPeaks, pal.mid[0], pal.mid[1], PH - 108, pal.snowAlpha * 0.7);
+
+        if (pal.ocean) {
+          // Shimmering turquoise sea along the horizon
+          const seaG = pCtx.createLinearGradient(0, PH - 68, 0, PH);
+          seaG.addColorStop(0, '#0284c7');
+          seaG.addColorStop(0.5, '#06b6d4');
+          seaG.addColorStop(1, '#0f766e');
+          pCtx.fillStyle = seaG;
+          pCtx.fillRect(0, PH - 68, PW, 68);
+        }
+
+        if (pal.city) {
+          // Cyberpunk skyscraper silhouette & glowing neon windows
+          for (let b = 0; b < 90; b++) {
+            const bx = (b / 90) * PW;
+            const bw = 16 + (b % 5) * 6;
+            const bh = 40 + ((b * 37) % 110);
+            pCtx.fillStyle = b % 2 === 0 ? '#090d1e' : '#111827';
+            pCtx.fillRect(bx, PH - bh, bw, bh);
+            pCtx.fillStyle = b % 3 === 0 ? 'rgba(34, 211, 238, 0.75)' : 'rgba(240, 171, 252, 0.7)';
+            for (let wy = PH - bh + 8; wy < PH - 10; wy += 10) {
+              pCtx.fillRect(bx + 3, wy, bw - 6, 3);
+            }
+          }
+        } else {
+          // Horizon treeline
+          for (let i = 0; i < 360; i++) {
+            const tx = (i / 360) * PW;
+            const th = 16 + rng() * 28;
+            const ty = PH - (rng() * 10);
+            pCtx.fillStyle = i % 2 === 0 ? pal.treeA : pal.treeB;
+            pCtx.beginPath();
+            pCtx.moveTo(tx, ty - th);
+            pCtx.lineTo(tx - th * 0.35, ty);
+            pCtx.lineTo(tx + th * 0.35, ty);
+            pCtx.closePath();
+            pCtx.fill();
+          }
+        }
+
+        skyCache[theme] = canvas;
+        return canvas;
+      }
+
+      // Pre-render realistic environment sprites & initial sky panorama
+      function buildEnvironmentAssets() {
+        pineSpriteA = createRealisticPineSprite(180, 260, 101, false);
+        pineSpriteB = createRealisticPineSprite(180, 260, 209, false);
+        snowPineSprite = createRealisticPineSprite(180, 260, 315, true);
+        palmSprite = createPalmSprite(180, 260);
+        neonPylonSprite = createNeonPylonSprite(180, 260);
+        boulderSprite = createRealisticBoulderSprite(140, 100, 307);
+        cactusSprite = createCactusSprite(180, 260);
+        skyPanoramaCanvas = getSkyPanorama(P.skyTheme);
+      }
+
+      function createRealisticPineSprite(w, h, seed, snowy = false) {
+        const c = document.createElement('canvas');
+        c.width = w;
+        c.height = h;
+        const g = c.getContext('2d');
+        const rng = seededRandom(seed);
+        const cx = w / 2;
+
+        // Ground shadow
+        const shG = g.createRadialGradient(cx, h - 10, 4, cx, h - 10, w * 0.36);
+        shG.addColorStop(0, 'rgba(0, 0, 0, 0.5)');
+        shG.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        g.fillStyle = shG;
+        g.beginPath();
+        g.ellipse(cx, h - 10, w * 0.36, 9, 0, 0, Math.PI * 2);
+        g.fill();
+
+        // Textured Bark Trunk
+        const trunkW = w * 0.09;
+        const trunkG = g.createLinearGradient(cx - trunkW, 0, cx + trunkW, 0);
+        trunkG.addColorStop(0, '#6b4423');
+        trunkG.addColorStop(0.45, '#4a2e16');
+        trunkG.addColorStop(1, '#29180a');
+        g.fillStyle = trunkG;
+        g.beginPath();
+        g.moveTo(cx - trunkW * 0.4, h * 0.18);
+        g.lineTo(cx + trunkW * 0.4, h * 0.18);
+        g.lineTo(cx + trunkW * 1.15, h - 8);
+        g.lineTo(cx - trunkW * 1.15, h - 8);
+        g.closePath();
+        g.fill();
+
+        // Multi-tiered conifer needle clusters (bottom to top)
+        const tiers = 9;
+        for (let t = 0; t < tiers; t++) {
+          const progress = t / (tiers - 1); // 0 = bottom, 1 = top
+          const tierY = h * 0.84 - progress * (h * 0.72);
+          const tierSpan = (w * 0.42) * (1 - progress * 0.78) + 8;
+          const tierH = (h * 0.19) * (1 - progress * 0.42);
+
+          g.fillStyle = snowy ? '#1e3a3a' : '#0d2916';
+          drawFoliageBough(g, cx, tierY + 5, tierSpan * 1.02, tierH, rng, 11);
+
+          g.fillStyle = snowy ? '#335c57' : '#164625';
+          drawFoliageBough(g, cx, tierY, tierSpan * 0.96, tierH * 0.9, rng, 10);
+
+          g.fillStyle = snowy ? '#cbd5e1' : '#2d7a3e';
+          drawFoliageBough(g, cx - tierSpan * 0.08, tierY - 3, tierSpan * 0.78, tierH * 0.72, rng, 8);
+
+          g.fillStyle = snowy ? 'rgba(248, 250, 252, 0.9)' : 'rgba(74, 158, 72, 0.72)';
+          drawFoliageBough(g, cx - tierSpan * 0.12, tierY - 5, tierSpan * 0.52, tierH * 0.5, rng, 6);
+        }
+
+        return c;
+      }
+
+      function drawFoliageBough(g, cx, cy, span, height, rng, lobes) {
+        g.beginPath();
+        g.moveTo(cx, cy - height);
+        for (let i = 0; i <= lobes; i++) {
+          const frac = (i / lobes) * 2 - 1; // -1 to 1
+          const lx = cx + frac * span + (rng() - 0.5) * 6;
+          const droop = Math.abs(frac) * height * 0.45 + (i % 2 === 0 ? 6 : -3);
+          const ly = cy + droop;
+          g.lineTo(lx, ly);
+        }
+        g.closePath();
+        g.fill();
+      }
+
+      function createRealisticBoulderSprite(w, h, seed) {
+        const c = document.createElement('canvas');
+        c.width = w;
+        c.height = h;
+        const g = c.getContext('2d');
+        const rng = seededRandom(seed);
+
+        const rockG = g.createLinearGradient(w * 0.2, h * 0.15, w * 0.85, h * 0.9);
+        rockG.addColorStop(0, '#94a3b8');
+        rockG.addColorStop(0.45, '#64748b');
+        rockG.addColorStop(1, '#334155');
+        g.fillStyle = rockG;
+
+        g.beginPath();
+        g.moveTo(w * 0.1, h * 0.9);
+        g.lineTo(w * 0.18, h * 0.42);
+        g.lineTo(w * 0.42, h * 0.16);
+        g.lineTo(w * 0.74, h * 0.24);
+        g.lineTo(w * 0.9, h * 0.62);
+        g.lineTo(w * 0.92, h * 0.9);
+        g.closePath();
+        g.fill();
+
+        // Facet cracks
+        g.fillStyle = 'rgba(15, 23, 42, 0.35)';
+        g.beginPath();
+        g.moveTo(w * 0.42, h * 0.16);
+        g.lineTo(w * 0.52, h * 0.55);
+        g.lineTo(w * 0.92, h * 0.9);
+        g.lineTo(w * 0.9, h * 0.62);
+        g.lineTo(w * 0.74, h * 0.24);
+        g.closePath();
+        g.fill();
+
+        // Moss patch
+        for (let i = 0; i < 6; i++) {
+          g.fillStyle = 'rgba(34, 102, 52, 0.55)';
+          g.beginPath();
+          g.arc(w * (0.28 + rng() * 0.4), h * (0.28 + rng() * 0.3), 6 + rng() * 8, 0, Math.PI * 2);
+          g.fill();
+        }
+        return c;
+      }
+
+      // --- Web Audio Synthesizer (Realistic Four-Stroke Superbike Exhaust) ---
+      let audioCtx = null;
+      let soundEnabled = true;
+      let engineOsc1 = null;
+      let engineOsc2 = null;
+      let engineGain = null;
+
+      function initAudio() {
+        if (!soundEnabled) return;
+        if (!audioCtx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (!AudioCtx) return;
+          audioCtx = new AudioCtx();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        if (!engineOsc1 && audioCtx) {
+          engineOsc1 = audioCtx.createOscillator();
+          engineOsc2 = audioCtx.createOscillator();
+          engineGain = audioCtx.createGain();
+          const filter = audioCtx.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.frequency.value = 520;
+
+          engineOsc1.type = 'sawtooth';
+          engineOsc2.type = 'triangle';
+          engineOsc1.frequency.value = 62;
+          engineOsc2.frequency.value = 124;
+          engineGain.gain.value = 0.0;
+
+          engineOsc1.connect(filter);
+          engineOsc2.connect(filter);
+          filter.connect(engineGain);
+          engineGain.connect(audioCtx.destination);
+          engineOsc1.start();
+          engineOsc2.start();
+        }
+      }
+
+      function updateEngineSound() {
+        if (!audioCtx || !engineOsc1 || !engineGain) return;
+        if (!soundEnabled || gameState !== 'racing') {
+          engineGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.06);
+          return;
+        }
+        const ratio = Math.min(1, speed / MAX_SPEED_WORLD);
+        // Simulate 6-speed gearbox RPM cadence
+        const gearProgress = (ratio * 5) % 1;
+        const baseFreq = 64 + ratio * 155 + gearProgress * 36 + (playerY > 0 ? 28 : 0);
+        engineOsc1.frequency.setTargetAtTime(baseFreq, audioCtx.currentTime, 0.035);
+        engineOsc2.frequency.setTargetAtTime(baseFreq * 1.98, audioCtx.currentTime, 0.035);
+        engineGain.gain.setTargetAtTime(0.028 + ratio * 0.042, audioCtx.currentTime, 0.05);
+      }
+
+      function playTone(freq, duration, type = 'sine', vol = 0.12) {
+        if (!soundEnabled || !audioCtx) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      }
+
+      function announce(msg) {
+        liveAnnouncer.textContent = msg;
+      }
+
+      // --- Track Builder ---
+      function buildTrack() {
+        segments = [];
+        obstacles = [];
+
+        function addSection(len, curve, hill, isTunnel = false) {
+          const startY = segments.length ? segments[segments.length - 1].p2.world.y : 0;
+          for (let i = 0; i < len; i++) {
+            const n = segments.length;
+            const y1 = startY + Math.sin((i / len) * Math.PI) * hill;
+            const y2 = startY + Math.sin(((i + 1) / len) * Math.PI) * hill;
+            const seg = {
+              index: n,
+              p1: { world: { x: 0, y: y1, z: n * SEGMENT_LEN }, camera: {}, screen: {} },
+              p2: { world: { x: 0, y: y2, z: (n + 1) * SEGMENT_LEN }, camera: {}, screen: {} },
+              curve,
+              baseCurve: curve,
+              isTunnel,
+              isTunnelEntrance: isTunnel && i === 0,
+              isFinish: n >= 1 && n <= 2,
+              isForkSplitter: false,
+              isForkZone: false,
+              color: Math.floor(n / 3) % 2 === 0 ? 'light' : 'dark',
+              scenery: []
+            };
+
+            if (!isTunnel) {
+              if (n % P.ev === 0) {
+                seg.scenery.push({
+                  type: P.trees[n % 2],
+                  offset: -1.55 - (n % 4) * 0.32,
+                  scale: 0.95 + (n % 3) * 0.22
+                });
+                seg.scenery.push({
+                  type: P.trees[(n + 1) % 2],
+                  offset: 1.55 + ((n + 2) % 4) * 0.32,
+                  scale: 0.95 + ((n + 1) % 3) * 0.22
+                });
+              }
+              if (P.rocks && n % 7 === 0) {
+                seg.scenery.push({
+                  type: 'boulder',
+                  offset: (n % 2 === 0 ? -1 : 1) * (1.35 + (n % 3) * 0.25),
+                  scale: 0.8 + (n % 2) * 0.35
+                });
+              }
+            }
+            segments.push(seg);
+          }
+        }
+
+        P = MAPS[currentMap];
+        skyPanoramaCanvas = getSkyPanorama(P.skyTheme);
+        DIFFS[currentDiff].route(P.sections).forEach(([len, curve, hill, tun]) => addSection(len, curve, hill, !!tun));
+
+        trackLength = segments.length * SEGMENT_LEN;
+
+        // Mid-lap Split Route Fork (Speed Lane Left vs Jump Shortcut Right)
+        forkStartIdx = Math.floor(segments.length * 0.43);
+        forkEndIdx = Math.min(segments.length - 12, forkStartIdx + 32);
+        for (let k = forkStartIdx - 6; k < forkEndIdx; k++) {
+          if (segments[k]) {
+            if (k >= forkStartIdx - 5 && k <= forkStartIdx + 1) {
+              segments[k].isForkSplitter = true;
+            }
+            if (k >= forkStartIdx && k <= forkEndIdx) {
+              segments[k].isForkZone = true;
+            }
+          }
+        }
+
+        const hazardSegs = DIFFS[currentDiff].haz.map(f => Math.round(f * segments.length));
+        hazardSegs.forEach((idx, i) => {
+          if (idx >= forkStartIdx - 4 && idx <= forkEndIdx + 2) return;
+          const isRamp = i % 2 === 0;
+          obstacles.push({
+            segIndex: idx,
+            z: idx * SEGMENT_LEN,
+            x: (i % 3 === 0 ? -0.45 : i % 3 === 1 ? 0.45 : 0),
+            type: isRamp ? 'ramp' : 'cone',
+            width: isRamp ? 0.38 : 0.25
+          });
+        });
+
+        // Fork Branch Obstacles: Left Lane = Turbo Boost Pads, Right Lane = Air Ramps
+        [forkStartIdx + 5, forkStartIdx + 14, forkStartIdx + 23].forEach(idx => {
+          if (idx < segments.length) {
+            obstacles.push({
+              segIndex: idx,
+              z: idx * SEGMENT_LEN,
+              x: -0.52,
+              type: 'boost',
+              width: 0.42
+            });
+            obstacles.push({
+              segIndex: idx + 1,
+              z: (idx + 1) * SEGMENT_LEN,
+              x: 0.52,
+              type: 'ramp',
+              width: 0.42
+            });
+          }
+        });
+
+        // Precompute closed-loop 2D circuit minimap coordinates
+        minimapPoints = [];
+        const stepIndices = [];
+        for (let i = 0; i < segments.length; i += 2) stepIndices.push(i);
+        const N = stepIndices.length || 1;
+        let totalCurveDeflection = 0;
+        stepIndices.forEach(i => {
+          totalCurveDeflection += segments[i].curve * 0.017;
+        });
+        const baseTurnPerStep = (Math.PI * 2 - totalCurveDeflection) / N;
+
+        let mx = 0, my = 0, angle = -Math.PI / 2;
+        stepIndices.forEach((segIdx, k) => {
+          angle += baseTurnPerStep + segments[segIdx].curve * 0.017;
+          mx += Math.cos(angle) * 2.5;
+          my += Math.sin(angle) * 2.5;
+          minimapPoints.push({
+            x: mx,
+            y: my,
+            segIdx,
+            isTunnel: segments[segIdx].isTunnel,
+            isFork: segments[segIdx].isForkZone
+          });
+        });
+
+        // Smoothly close the loop drift so start and finish meet seamlessly
+        const endX = mx;
+        const endY = my;
+        minimapPoints.forEach((p, k) => {
+          const frac = (k + 1) / N;
+          p.x -= endX * frac;
+          p.y -= endY * frac;
+        });
+
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        minimapPoints.forEach(p => {
+          if (p.x < minX) minX = p.x;
+          if (p.x > maxX) maxX = p.x;
+          if (p.y < minY) minY = p.y;
+          if (p.y > maxY) maxY = p.y;
+        });
+        const span = Math.max(maxX - minX, maxY - minY) || 1;
+        const pad = 13;
+        const size = 98 - pad * 2;
+        minimapPoints.forEach(p => {
+          p.nx = pad + ((p.x - minX) / span) * size + (size - ((maxX - minX) / span) * size) / 2;
+          p.ny = pad + ((p.y - minY) / span) * size + (size - ((maxY - minY) / span) * size) / 2;
+        });
+      }
+
+      function spawnRivals() {
+        const colors = [
+          { body: '#2563eb', accent: '#60a5fa', suit: '#0f172a', helmet: '#f8fafc' },
+          { body: '#eab308', accent: '#fde047', suit: '#1e1b18', helmet: '#facc15' },
+          { body: '#10b981', accent: '#34d399', suit: '#091e1a', helmet: '#ecfdf5' },
+          { body: '#f97316', accent: '#fdba74', suit: '#1c1917', helmet: '#ffedd5' },
+          { body: '#9333ea', accent: '#c084fc', suit: '#181028', helmet: '#f3e8ff' }
+        ];
+        rivals = colors.map((c, idx) => {
+          const startZ = 280 + idx * 340;
+          return {
+            id: idx,
+            bodyColor: c.body,
+            accentColor: c.accent,
+            suitColor: c.suit,
+            helmetColor: c.helmet,
+            z: startZ,
+            totalZ: startZ,
+            x: (idx % 2 === 0 ? -0.44 : 0.44) * (0.72 + (idx % 3) * 0.14),
+            targetX: (idx % 2 === 0 ? -0.42 : 0.42),
+            baseSpeed: MAX_SPEED_WORLD * (0.76 + idx * 0.041) * DIFFS[currentDiff].rival,
+            speed: 0,
+            lean: 0
+          };
+        });
+      }
+
+      function resetRace(startImmediately = false) {
+        playerZ = 0;
+        playerTotalZ = 0;
+        playerX = 0;
+        playerY = 0;
+        playerVy = 0;
+        speed = 0;
+        steerLean = 0;
+        riderHangOff = 0;
+        currentLap = 1;
+        currentRank = 6;
+        raceTime = 0;
+        jumpCooldown = 0;
+        hitFlash = 0;
+        boostTimer = 0;
+        activeBranch = 'main';
+        particles = [];
+        spawnRivals();
+        updateHUD();
+        drawSpeedometer(0);
+
+        if (startImmediately) {
+          initAudio();
+          gameState = 'countdown';
+          countdownTimer = 3.2;
+          lastCountdownText = '';
+          raceModal.hidden = true;
+          countdownBanner.hidden = false;
+          announce('Race countdown started');
+        } else {
+          gameState = 'menu';
+          raceModal.hidden = false;
+          countdownBanner.hidden = true;
+        }
+      }
+
+      // --- Projection Helper ---
+      function project(p, camX, camY, camZ, width, height) {
+        const dz = p.world.z - camZ;
+        p.camera.z = dz;
+        if (dz <= 1) {
+          p.screen.scale = 0;
+          return;
+        }
+        p.camera.x = p.world.x - camX;
+        p.camera.y = p.world.y - camY;
+        p.screen.scale = CAMERA_DEPTH / dz;
+        p.screen.x = Math.round(width / 2 + p.screen.scale * p.camera.x * width / 2);
+        p.screen.y = Math.round(height / 2 - p.screen.scale * p.camera.y * height / 2);
+        p.screen.w = Math.round(p.screen.scale * ROAD_WIDTH * width / 2);
+      }
+
+      function findSegment(z) {
+        const idx = Math.floor(((z % trackLength) + trackLength) % trackLength / SEGMENT_LEN);
+        return segments[idx];
+      }
+
+      // --- Physics Update ---
+      function update(dt) {
+        if (gameState === 'countdown') {
+          countdownTimer -= dt;
+          let text = '';
+          if (countdownTimer > 2.2) text = '3';
+          else if (countdownTimer > 1.2) text = '2';
+          else if (countdownTimer > 0.2) text = '1';
+          else text = 'GO!';
+
+          if (text !== lastCountdownText) {
+            lastCountdownText = text;
+            countdownBanner.textContent = text;
+            playTone(text === 'GO!' ? 880 : 440, text === 'GO!' ? 0.28 : 0.14, 'triangle', 0.16);
+          }
+
+          if (countdownTimer <= 0) {
+            countdownBanner.hidden = true;
+            gameState = 'racing';
+            announce('Go! Race started.');
+          }
+          return;
+        }
+
+        if (gameState !== 'racing') return;
+
+        raceTime += dt;
+        wheelPhase += (speed / MAX_SPEED_WORLD) * dt * 45;
+        if (jumpCooldown > 0) jumpCooldown -= dt;
+        if (hitFlash > 0) hitFlash -= dt;
+        if (boostTimer > 0) boostTimer -= dt;
+
+        // Player acceleration & braking
+        if (input.up || boostTimer > 0) {
+          speed += (boostTimer > 0 ? ACCEL * 1.45 : ACCEL) * dt;
+        } else if (input.down) {
+          speed -= BRAKE_DECEL * dt;
+        } else {
+          speed -= NATURAL_DECEL * dt;
+        }
+
+        // Off-road drag
+        if (Math.abs(playerX) > 1.05 && playerY <= 5) {
+          speed -= OFFROAD_DECEL * dt;
+          speed = Math.min(speed, MAX_SPEED_WORLD * 0.58);
+        }
+
+        const maxCap = boostTimer > 0 ? MAX_SPEED_WORLD * 1.08 : MAX_SPEED_WORLD;
+        speed = Math.max(0, Math.min(maxCap, speed));
+
+        // Steering & centrifugal curve pull
+        const speedRatio = speed / MAX_SPEED_WORLD;
+        const steerDir = (input.right ? 1 : 0) - (input.left ? 1 : 0);
+        const steerStrength = 1.88 * (0.25 + 0.75 * speedRatio);
+        playerX += steerDir * steerStrength * dt;
+
+        const baseSeg = findSegment(playerZ);
+        playerX -= baseSeg.curve * 0.26 * speedRatio * dt;
+        playerX = Math.max(-1.65, Math.min(1.65, playerX));
+
+        // Smooth bike lean and natural human rider weight transfer (hang-off)
+        const targetLean = steerDir * (0.38 + 0.62 * speedRatio) + baseSeg.curve * 0.08 * speedRatio;
+        steerLean += (targetLean - steerLean) * Math.min(1, dt * 11);
+        riderHangOff += (steerDir * (0.5 + 0.5 * speedRatio) - riderHangOff) * Math.min(1, dt * 8.5);
+
+        // Jump (Spacebar)
+        if (input.jump && playerY === 0 && jumpCooldown <= 0) {
+          playerVy = 1200;
+          jumpCooldown = 0.45;
+          playTone(320, 0.14, 'sine', 0.1);
+        }
+
+        if (playerY > 0 || playerVy !== 0) {
+          playerY += playerVy * dt;
+          playerVy -= 3400 * dt;
+          if (playerY <= 0) {
+            playerY = 0;
+            playerVy = 0;
+            // Spawn tire puff on landing
+            for (let i = 0; i < 6; i++) {
+              particles.push({
+                x: gameCanvas.width / 2 + (Math.random() - 0.5) * 34,
+                y: gameCanvas.height - 20,
+                vx: (Math.random() - 0.5) * 90,
+                vy: -20 - Math.random() * 40,
+                life: 0.35,
+                maxLife: 0.35,
+                size: 8 + Math.random() * 10,
+                color: 'rgba(203, 213, 225, 0.45)'
+              });
+            }
+          }
+        }
+
+        // Exhaust / tire particles
+        if (speed > 2000 && Math.random() < 0.45) {
+          particles.push({
+            x: gameCanvas.width / 2 + steerLean * 14 + (Math.random() - 0.5) * 16,
+            y: gameCanvas.height - 46 - playerY * 0.16,
+            vx: (Math.random() - 0.5) * 30 - steerLean * 40,
+            vy: 35 + Math.random() * 45,
+            life: 0.24,
+            maxLife: 0.24,
+            size: 4 + Math.random() * 6,
+            color: (speed > MAX_SPEED_WORLD * 0.8 || boostTimer > 0) ? 'rgba(56, 189, 248, 0.55)' : 'rgba(148, 163, 184, 0.25)'
+          });
+        }
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const pt = particles[i];
+          pt.x += pt.vx * dt;
+          pt.y += pt.vy * dt;
+          pt.life -= dt;
+          if (pt.life <= 0) particles.splice(i, 1);
+        }
+
+        // Advance Z
+        const dz = speed * dt;
+        playerZ = (playerZ + dz) % trackLength;
+        playerTotalZ += dz;
+
+        const newLap = Math.min(TOTAL_LAPS, Math.floor(playerTotalZ / trackLength) + 1);
+        if (newLap > currentLap) {
+          currentLap = newLap;
+          activeBranch = 'main';
+          playTone(660, 0.2, 'triangle', 0.14);
+          announce(`Lap ${currentLap} of ${TOTAL_LAPS}`);
+        }
+
+        // Track Fork Branch Selection & Dynamic Curve Shaping
+        const currentSegIdx = baseSeg.index;
+        if (currentSegIdx >= forkStartIdx && currentSegIdx <= forkStartIdx + 3 && activeBranch === 'main') {
+          activeBranch = playerX < 0 ? 'left' : 'right';
+          for (let k = forkStartIdx; k <= forkEndIdx; k++) {
+            if (segments[k]) {
+              segments[k].curve = activeBranch === 'left'
+                ? segments[k].baseCurve * 0.55
+                : -segments[k].baseCurve * 0.85;
+            }
+          }
+          announce(activeBranch === 'left' ? 'Left Speed Route selected' : 'Right Jump Route selected');
+        } else if (currentSegIdx > forkEndIdx && activeBranch !== 'main') {
+          activeBranch = 'main';
+        }
+
+        // Check obstacles (ramps, turbo boost pads & cones)
+        for (const obs of obstacles) {
+          if (Math.abs(obs.segIndex - currentSegIdx) <= 1 && Math.abs(playerX - obs.x) < obs.width) {
+            if (obs.type === 'ramp' && playerY < 60) {
+              playerVy = 1520;
+              speed = Math.min(MAX_SPEED_WORLD * 1.05, speed + 1500);
+              playTone(520, 0.18, 'triangle', 0.13);
+            } else if (obs.type === 'boost' && playerY < 45) {
+              boostTimer = 0.65;
+              speed = Math.min(MAX_SPEED_WORLD * 1.08, speed + 1850);
+              playTone(720, 0.15, 'sine', 0.12);
+            } else if (obs.type === 'cone' && playerY < 45 && hitFlash <= 0) {
+              speed *= 0.62;
+              hitFlash = 0.55;
+              playTone(130, 0.22, 'sawtooth', 0.15);
+            }
+          }
+        }
+
+        // Update AI Rivals
+        for (const r of rivals) {
+          const rSeg = findSegment(r.z);
+          const diff = playerTotalZ - r.totalZ;
+          const rubber = Math.max(-0.08, Math.min(0.12, diff / (trackLength * 0.6)));
+          const desiredSpeed = r.baseSpeed * (1 + rubber);
+          r.speed += (desiredSpeed - r.speed) * Math.min(1, dt * 2.5);
+
+          const rDz = r.speed * dt;
+          r.z = (r.z + rDz) % trackLength;
+          r.totalZ += rDz;
+
+          if (Math.random() < 0.015) {
+            r.targetX = (Math.random() - 0.5) * 1.4;
+          }
+          const prevX = r.x;
+          r.x += (r.targetX - r.x) * Math.min(1, dt * 1.8) - rSeg.curve * 0.05 * dt;
+          r.x = Math.max(-0.85, Math.min(0.85, r.x));
+          const targetRLean = (r.x - prevX) * 26 + rSeg.curve * 0.12;
+          r.lean += (targetRLean - r.lean) * Math.min(1, dt * 8);
+
+          // Player <-> Rival bump check
+          const distZ = Math.abs(r.z - playerZ);
+          if ((distZ < 160 || distZ > trackLength - 160) && Math.abs(r.x - playerX) < 0.26 && playerY < 50 && hitFlash <= 0) {
+            speed = Math.max(speed * 0.78, r.speed * 0.85);
+            hitFlash = 0.35;
+            playTone(160, 0.14, 'square', 0.1);
+          }
+        }
+
+        // Compute Rank (1..6)
+        let ahead = 0;
+        for (const r of rivals) {
+          if (r.totalZ > playerTotalZ) ahead++;
+        }
+        currentRank = ahead + 1;
+
+        // Check Race Finish
+        if (playerTotalZ >= trackLength * TOTAL_LAPS) {
+          gameState = 'finished';
+          updateEngineSound();
+          playTone(784, 0.35, 'triangle', 0.18);
+          modalTitle.textContent = `FINISHED — ${ordinal(currentRank)} PLACE!`;
+          modalDesc.textContent = `${P.name} (${DIFFS[currentDiff].name}) completed in ${formatTime(raceTime)}. Pick another route below or race again!`;
+          startBtn.textContent = 'Race Again';
+          raceModal.hidden = false;
+          announce(`Race finished! You placed ${ordinal(currentRank)} in ${formatTime(raceTime)}.`);
+          startBtn.focus();
+        }
+
+        updateEngineSound();
+        updateHUD();
+      }
+
+      function ordinal(n) {
+        if (n === 1) return '1st';
+        if (n === 2) return '2nd';
+        if (n === 3) return '3rd';
+        return `${n}th`;
+      }
+
+      function formatTime(t) {
+        const mins = Math.floor(t / 60);
+        const secs = Math.floor(t % 60);
+        const cs = Math.floor((t * 100) % 100);
+        return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${String(cs).padStart(2, '0')}`;
+      }
+
+      function updateHUD() {
+        const kmh = Math.round((speed / MAX_SPEED_WORLD) * 200);
+        hudPos.textContent = currentRank;
+        hudLap.textContent = `${currentLap}/${TOTAL_LAPS}`;
+        hudSpeed.textContent = kmh;
+
+        if (hudRouteBadge) {
+          const branchText = activeBranch === 'left'
+            ? ' · ◀ Speed Branch'
+            : activeBranch === 'right'
+              ? ' · Jump Branch ▶'
+              : '';
+          hudRouteBadge.textContent = `Route ${currentMap + 1}: ${P.name}${branchText}`;
+        }
+
+        dashPos.textContent = `${currentRank} / 6`;
+        dashLap.textContent = `${currentLap} / ${TOTAL_LAPS}`;
+        dashTime.textContent = formatTime(raceTime);
+
+        drawSpeedometer(kmh);
+        drawMinimap();
+      }
+
+      // --- Main 3D Scene Renderer ---
+      let skyHeading = 0;
+
+      function render() {
+        const W = gameCanvas.width;
+        const H = gameCanvas.height;
+        const horizonY = Math.round(H * 0.51);
+
+        const playerSeg = findSegment(playerZ);
+        // Place camera PLAYER_CAM_DIST behind the player so playerZ projects onto the foreground road
+        const camOriginZ = ((playerZ - PLAYER_CAM_DIST) % trackLength + trackLength) % trackLength;
+        const camSeg = findSegment(camOriginZ);
+        const camBaseIdx = camSeg.index;
+        const camBasePercent = (camOriginZ % SEGMENT_LEN) / SEGMENT_LEN;
+
+        // Smoothly accumulate heading for parallax sky/mountain panorama
+        if (gameState === 'racing') {
+          skyHeading = (skyHeading + playerSeg.curve * (speed / MAX_SPEED_WORLD) * 1.6) % skyPanoramaCanvas.width;
+        }
+        const panOffset = ((skyHeading % skyPanoramaCanvas.width) + skyPanoramaCanvas.width) % skyPanoramaCanvas.width;
+
+        // 1. Draw Pre-rendered Realistic Sky, Volumetric Clouds & Route Horizon
+        ctx.drawImage(skyPanoramaCanvas, panOffset, 0, skyPanoramaCanvas.width - panOffset, skyPanoramaCanvas.height, 0, 0, W * ((skyPanoramaCanvas.width - panOffset) / skyPanoramaCanvas.width), horizonY + 14);
+        if (panOffset > 0) {
+          ctx.drawImage(skyPanoramaCanvas, 0, 0, panOffset, skyPanoramaCanvas.height, W * ((skyPanoramaCanvas.width - panOffset) / skyPanoramaCanvas.width) - 1, 0, W * (panOffset / skyPanoramaCanvas.width) + 2, horizonY + 14);
+        }
+
+        if (P.wash) {
+          ctx.fillStyle = P.wash;
+          ctx.fillRect(0, 0, W, horizonY + 14);
+        }
+        if (P.night) {
+          ctx.fillStyle = '#ffffff';
+          for (let k = 0; k < 70; k++) {
+            const sz = k % 5 === 0 ? 2 : 1;
+            ctx.fillRect((k * 337) % W, (k * 89) % (horizonY - 40), sz, sz);
+          }
+        }
+
+        // Base valley floor
+        ctx.fillStyle = P.floor;
+        ctx.fillRect(0, horizonY, W, H - horizonY);
+
+        // 2. Project Road Segments from Camera Origin
+        const camY = CAMERA_HEIGHT + camSeg.p1.world.y + (camSeg.p2.world.y - camSeg.p1.world.y) * camBasePercent;
+        const camX = playerX * ROAD_WIDTH;
+        const playerRoadW = (CAMERA_DEPTH / PLAYER_CAM_DIST) * ROAD_WIDTH * (W / 2);
+
+        let x = 0;
+        let dx = -(camSeg.curve * camBasePercent);
+        let maxY = H;
+
+        const visibleSegments = [];
+
+        for (let n = 0; n < DRAW_DISTANCE; n++) {
+          const seg = segments[(camBaseIdx + n) % segments.length];
+          const looped = seg.index < camBaseIdx;
+          const camZ = camOriginZ - (looped ? trackLength : 0);
+
+          seg.p1.world.x = x;
+          seg.p2.world.x = x + dx;
+          x += dx;
+          dx += seg.curve;
+
+          project(seg.p1, camX, camY, camZ, W, H);
+          project(seg.p2, camX, camY, camZ, W, H);
+
+          seg.clip = maxY;
+          if (seg.p1.camera.z <= 1 || seg.p2.screen.y >= maxY || seg.p2.screen.y >= seg.p1.screen.y) {
+            continue;
+          }
+          maxY = seg.p2.screen.y;
+          visibleSegments.push(seg);
+        }
+
+        // 3. Draw Segments Back-to-Front
+        for (let i = visibleSegments.length - 1; i >= 0; i--) {
+          const seg = visibleSegments[i];
+          const p1 = seg.p1.screen;
+          const p2 = seg.p2.screen;
+          const isLight = seg.color === 'light';
+
+          // Terrain / Grass / Tunnel Floor
+          if (seg.isTunnel) {
+            ctx.fillStyle = isLight ? '#141c2b' : '#0f1623';
+          } else {
+            ctx.fillStyle = P.grass[isLight ? 0 : 1];
+          }
+          ctx.fillRect(0, p2.y, W, p1.y - p2.y);
+
+          // Gravel Shoulder outside road
+          const sh1 = p1.w * 1.24;
+          const sh2 = p2.w * 1.24;
+          ctx.fillStyle = seg.isTunnel ? '#1e293b' : P.shoulder[isLight ? 0 : 1];
+          drawQuad(p1.x - sh1, p1.y, p1.x + sh1, p1.y, p2.x + sh2, p2.y, p2.x - sh2, p2.y);
+
+          // Main Asphalt Surface
+          ctx.fillStyle = seg.isTunnel
+            ? (isLight ? '#222d3f' : '#1b2535')
+            : P.road[isLight ? 0 : 1];
+          drawQuad(p1.x - p1.w, p1.y, p1.x + p1.w, p1.y, p2.x + p2.w, p2.y, p2.x - p2.w, p2.y);
+
+          // Subtle Specular Sun Sheen & Tire Wear Tracks on Asphalt
+          const sheenW1 = p1.w * 0.22;
+          const sheenW2 = p2.w * 0.22;
+          ctx.fillStyle = seg.isTunnel ? 'rgba(253, 224, 71, 0.05)' : 'rgba(226, 232, 240, 0.06)';
+          drawQuad(p1.x - sheenW1, p1.y, p1.x + sheenW1, p1.y, p2.x + sheenW2, p2.y, p2.x - sheenW2, p2.y);
+
+          // Fork Splitter Painted Island in Center of Road
+          if (seg.isForkSplitter) {
+            const fw1 = p1.w * 0.14;
+            const fw2 = p2.w * 0.14;
+            ctx.fillStyle = isLight ? '#facc15' : '#0f172a';
+            drawQuad(p1.x - fw1, p1.y, p1.x + fw1, p1.y, p2.x + fw2, p2.y, p2.x - fw2, p2.y);
+          } else if (seg.isForkZone && isLight) {
+            const divW1 = Math.max(2, p1.w * 0.032);
+            const divW2 = Math.max(1.5, p2.w * 0.032);
+            ctx.fillStyle = '#38bdf8';
+            drawQuad(p1.x - divW1, p1.y, p1.x + divW1, p1.y, p2.x + divW2, p2.y, p2.x - divW2, p2.y);
+          }
+
+          // Tire tracks in the 3 lanes
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.18)';
+          for (const laneCenter of [-0.65, 0, 0.65]) {
+            const tw1 = p1.w * 0.14;
+            const tw2 = p2.w * 0.14;
+            const tx1 = p1.x + p1.w * laneCenter;
+            const tx2 = p2.x + p2.w * laneCenter;
+            drawQuad(tx1 - tw1, p1.y, tx1 + tw1, p1.y, tx2 + tw2, p2.y, tx2 - tw2, p2.y);
+          }
+
+          // Continuous White Edge Lines
+          const edgeW1 = Math.max(1.5, p1.w * 0.022);
+          const edgeW2 = Math.max(1.2, p2.w * 0.022);
+          ctx.fillStyle = P.edge;
+          for (const side of [-0.95, 0.95]) {
+            const ex1 = p1.x + p1.w * side;
+            const ex2 = p2.x + p2.w * side;
+            drawQuad(ex1 - edgeW1, p1.y, ex1 + edgeW1, p1.y, ex2 + edgeW2, p2.y, ex2 - edgeW2, p2.y);
+          }
+
+          // Dashed White Lane Dividers
+          if (isLight) {
+            const lw1 = Math.max(1.5, p1.w * 0.022);
+            const lw2 = Math.max(1.2, p2.w * 0.022);
+            ctx.fillStyle = P.lane;
+            for (const lane of [-0.33, 0.33]) {
+              const lx1 = p1.x + p1.w * lane;
+              const lx2 = p2.x + p2.w * lane;
+              drawQuad(lx1 - lw1, p1.y, lx1 + lw1, p1.y, lx2 + lw2, p2.y, lx2 - lw2, p2.y);
+            }
+          }
+
+          // Metallic W-Beam Highway Guardrails on Both Sides
+          drawGuardrailSegment(p1, p2, -1, isLight);
+          drawGuardrailSegment(p1, p2, 1, isLight);
+
+          // Checkered Start/Finish Line
+          if (seg.isFinish) {
+            const cols = 12;
+            const cw1 = (p1.w * 2) / cols;
+            const cw2 = (p2.w * 2) / cols;
+            for (let c = 0; c < cols; c++) {
+              ctx.fillStyle = (c + seg.index) % 2 === 0 ? '#ffffff' : '#0f172a';
+              drawQuad(
+                p1.x - p1.w + c * cw1, p1.y,
+                p1.x - p1.w + (c + 1) * cw1, p1.y,
+                p2.x - p2.w + (c + 1) * cw2, p2.y,
+                p2.x - p2.w + c * cw2, p2.y
+              );
+            }
+          }
+
+          // Stone Mountain Tunnel Architecture
+          if (seg.isTunnel) {
+            drawStoneTunnelSegment(seg, p1, p2, W);
+          }
+
+          // Roadside Trees, Palms, Snow Pines, Neon Pylons & Boulders
+          for (const item of seg.scenery) {
+            const sx = p1.x + p1.w * item.offset;
+            if (item.type === 'boulder') {
+              const bw = p1.w * 0.42 * item.scale;
+              const bh = bw * (100 / 140);
+              if (bw > 4) {
+                ctx.drawImage(boulderSprite, sx - bw / 2, p1.y - bh * 0.88, bw, bh);
+              }
+            } else {
+              const sprite = item.type === 'cactus'
+                ? cactusSprite
+                : item.type === 'palm'
+                  ? palmSprite
+                  : item.type === 'snowPine'
+                    ? snowPineSprite
+                    : item.type === 'neonPylon'
+                      ? neonPylonSprite
+                      : item.type === 'pineA'
+                        ? pineSpriteA
+                        : pineSpriteB;
+              const treeH = p1.w * 0.96 * item.scale;
+              const treeW = treeH * (180 / 260);
+              if (treeH > 5) {
+                ctx.drawImage(sprite, sx - treeW / 2, p1.y - treeH * 0.95, treeW, treeH);
+              }
+            }
+          }
+
+          // Start/Finish Gantry & Mid-Lap Route Fork Sign Gantry
+          if (seg.index === 2) {
+            drawFinishGantry(p1.x, p1.y, p1.w * 1.15);
+          } else if (seg.index === forkStartIdx) {
+            drawForkGantry(p1.x, p1.y, p1.w * 1.15);
+          }
+
+          // Obstacles on this segment
+          for (const obs of obstacles) {
+            if (obs.segIndex === seg.index) {
+              const ox = p1.x + p1.w * obs.x;
+              const ow = p1.w * obs.width;
+              if (ow > 3) {
+                if (obs.type === 'ramp') {
+                  drawRamp(ox, p1.y, ow);
+                } else if (obs.type === 'boost') {
+                  drawBoostPad(ox, p1.y, ow);
+                } else {
+                  drawCone(ox, p1.y, ow * 0.55);
+                }
+              }
+            }
+          }
+
+          // AI Rivals on this segment (with sub-segment interpolation & true perspective scale)
+          for (const r of rivals) {
+            const rSegIdx = Math.floor(r.z / SEGMENT_LEN);
+            if (rSegIdx === seg.index) {
+              const relZ = ((r.z - playerZ) % trackLength + trackLength) % trackLength;
+              if (relZ <= DRAW_DISTANCE * SEGMENT_LEN) {
+                const rPercent = (r.z % SEGMENT_LEN) / SEGMENT_LEN;
+                const rRoadX = p1.x + (p2.x - p1.x) * rPercent;
+                const rRoadY = p1.y + (p2.y - p1.y) * rPercent;
+                const rRoadW = p1.w + (p2.w - p1.w) * rPercent;
+                const rx = rRoadX + rRoadW * r.x;
+                const scale = Math.min(PLAYER_SCALE * 0.96, PLAYER_SCALE * (rRoadW / playerRoadW));
+                if (scale > 0.08 && rRoadY <= H - 10) {
+                  drawRealisticBikeAndRider(
+                    rx,
+                    rRoadY,
+                    scale,
+                    r.bodyColor,
+                    r.accentColor,
+                    r.suitColor,
+                    r.helmetColor,
+                    r.lean,
+                    r.lean * 0.65,
+                    0,
+                    false,
+                    false
+                  );
+                }
+              }
+            }
+          }
+        }
+
+        // Map atmosphere (haze / dusk / night) and night headlight beam
+        if (P.tint) {
+          ctx.fillStyle = P.tint;
+          ctx.fillRect(0, 0, W, H);
+        }
+        if (P.night) {
+          const beam = ctx.createLinearGradient(0, H, 0, horizonY);
+          beam.addColorStop(0, 'rgba(255, 244, 200, 0.42)');
+          beam.addColorStop(1, 'rgba(255, 244, 200, 0)');
+          ctx.globalCompositeOperation = 'lighter';
+          ctx.fillStyle = beam;
+          ctx.beginPath();
+          ctx.moveTo(W / 2 - 70, H);
+          ctx.lineTo(W / 2 + 70, H);
+          ctx.lineTo(W / 2 + 240, horizonY + 10);
+          ctx.lineTo(W / 2 - 240, horizonY + 10);
+          ctx.closePath();
+          ctx.fill();
+          ctx.globalCompositeOperation = 'source-over';
+        }
+
+        // 4. Exhaust & Tire Particles
+        for (const pt of particles) {
+          ctx.globalAlpha = Math.max(0, pt.life / pt.maxLife);
+          ctx.fillStyle = pt.color;
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+
+        // 5. High-Speed Wind Lines
+        if ((speed > MAX_SPEED_WORLD * 0.72 || boostTimer > 0) && gameState === 'racing') {
+          const intensity = boostTimer > 0 ? 1 : (speed / MAX_SPEED_WORLD - 0.72) / 0.28;
+          ctx.strokeStyle = `rgba(226, 232, 240, ${0.2 * intensity})`;
+          ctx.lineWidth = 1.5;
+          for (let w = 0; w < 8; w++) {
+            const angle = (w / 8) * Math.PI + ((raceTime * 9 + w) % 0.6);
+            const cx = W / 2;
+            const cy = H * 0.48;
+            const r1 = 220 + ((raceTime * 600 + w * 70) % 220);
+            const r2 = r1 + 45;
+            ctx.beginPath();
+            ctx.moveTo(cx + Math.cos(angle) * r1, cy + Math.sin(angle) * r1 * 0.6);
+            ctx.lineTo(cx + Math.cos(angle) * r2, cy + Math.sin(angle) * r2 * 0.6);
+            ctx.stroke();
+          }
+        }
+
+        // 6. Draw Main Player & Realistic Human Rider in Foreground
+        const vibration = speed > 800 && playerY === 0 ? Math.sin(raceTime * 38) * 1.2 : 0;
+        const playerScreenX = W / 2;
+        const playerScreenY = H - 16 + vibration;
+        if (hitFlash <= 0 || Math.floor(hitFlash * 20) % 2 === 0) {
+          drawRealisticBikeAndRider(
+            playerScreenX,
+            playerScreenY,
+            PLAYER_SCALE,
+            '#dc2626',   // Crimson metallic fairing
+            '#f87171',   // Specular red highlight
+            '#18181b',   // Matte black leather suit
+            '#1e293b',   // Carbon-metallic helmet
+            steerLean,
+            riderHangOff,
+            playerY * 0.16,
+            speed > MAX_SPEED_WORLD * 0.78 || boostTimer > 0,
+            input.down
+          );
+        }
+      }
+
+      // --- Guardrails & Stone Tunnel Rendering ---
+      function drawGuardrailSegment(p1, p2, side, isLight) {
+        const x1 = p1.x + side * p1.w * 1.07;
+        const x2 = p2.x + side * p2.w * 1.07;
+        const h1 = Math.max(2, p1.w * 0.085);
+        const h2 = Math.max(1.5, p2.w * 0.085);
+
+        // Guardrail Steel Post
+        if (isLight && h1 > 3) {
+          const postW = Math.max(2, p1.w * 0.018);
+          ctx.fillStyle = '#334155';
+          ctx.fillRect(x1 - postW / 2, p1.y - h1 * 1.05, postW, h1 * 1.05);
+        }
+
+        // Upper Corrugated Steel Beam
+        ctx.fillStyle = isLight ? '#cbd5e1' : '#94a3b8';
+        drawQuad(
+          x1, p1.y - h1,
+          x1, p1.y - h1 * 0.62,
+          x2, p2.y - h2 * 0.62,
+          x2, p2.y - h2
+        );
+
+        // Center W-groove shadow
+        ctx.fillStyle = '#475569';
+        drawQuad(
+          x1, p1.y - h1 * 0.62,
+          x1, p1.y - h1 * 0.45,
+          x2, p2.y - h2 * 0.45,
+          x2, p2.y - h2 * 0.62
+        );
+
+        // Red/White Safety Reflector on Post
+        if (isLight && h1 > 5) {
+          ctx.fillStyle = side > 0 ? '#ef4444' : '#facc15';
+          ctx.fillRect(x1 - 1.5, p1.y - h1 * 0.85, 3, Math.max(2, h1 * 0.22));
+        }
+      }
+
+      function drawStoneTunnelSegment(seg, p1, p2, W) {
+        const wallW1 = p1.w * 1.18;
+        const archH1 = p1.w * 0.85;
+
+        // If this is the tunnel portal entrance or every 2nd segment, render stone masonry arch
+        if (seg.isTunnelEntrance) {
+          // Mountain cliff embankment around the tunnel entrance
+          ctx.fillStyle = '#3f4a3c';
+          ctx.beginPath();
+          ctx.moveTo(p1.x - wallW1 * 2.4, p1.y);
+          ctx.lineTo(p1.x - wallW1 * 1.3, p1.y - archH1 * 1.45);
+          ctx.lineTo(p1.x + wallW1 * 1.3, p1.y - archH1 * 1.45);
+          ctx.lineTo(p1.x + wallW1 * 2.4, p1.y);
+          ctx.arc(p1.x, p1.y, wallW1, 0, Math.PI, true);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        if (seg.index % 2 === 0 && wallW1 > 12) {
+          // Dark tunnel ceiling vault
+          ctx.strokeStyle = seg.index % 4 === 0 ? '#334155' : '#1e293b';
+          ctx.lineWidth = Math.max(4, wallW1 * 0.14);
+          ctx.beginPath();
+          ctx.arc(p1.x, p1.y, wallW1, Math.PI, 0);
+          ctx.stroke();
+
+          // Cut-stone voussoir blocks along the arch
+          const blocks = 11;
+          for (let b = 0; b < blocks; b++) {
+            const a1 = Math.PI + (b / blocks) * Math.PI;
+            const a2 = Math.PI + ((b + 0.92) / blocks) * Math.PI;
+            ctx.strokeStyle = b % 2 === 0 ? '#64748b' : '#475569';
+            ctx.lineWidth = Math.max(3, wallW1 * 0.11);
+            ctx.beginPath();
+            ctx.arc(p1.x, p1.y, wallW1 * 1.02, a1, a2);
+            ctx.stroke();
+          }
+
+          // Warm overhead tunnel lamp & glow halo
+          if (seg.index % 4 === 0) {
+            const lampY = p1.y - wallW1 * 0.95;
+            const r = Math.max(3, wallW1 * 0.05);
+            const glow = ctx.createRadialGradient(p1.x, lampY, r * 0.2, p1.x, lampY, r * 5);
+            glow.addColorStop(0, 'rgba(254, 240, 138, 0.95)');
+            glow.addColorStop(0.35, 'rgba(250, 204, 21, 0.35)');
+            glow.addColorStop(1, 'rgba(250, 204, 21, 0)');
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.arc(p1.x, lampY, r * 5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+
+      // --- Anatomically Realistic Human Rider & Superbike Renderer ---
+      function drawRealisticBikeAndRider(
+        x,
+        y,
+        scale,
+        fairingColor,
+        fairingHighlight,
+        suitColor,
+        helmetColor,
+        bikeLean,
+        humanHangOff,
+        jumpOffset,
+        nitro,
+        isBraking
+      ) {
+        ctx.save();
+
+        // 1. Soft Multi-Layered Ground Contact Shadow
+        const shadowScale = Math.max(0.5, 1 - jumpOffset / 240);
+        const shGrad = ctx.createRadialGradient(x, y - 3 * scale, 4 * scale, x, y - 3 * scale, 42 * scale * shadowScale);
+        shGrad.addColorStop(0, 'rgba(0, 0, 0, 0.68)');
+        shGrad.addColorStop(0.55, 'rgba(0, 0, 0, 0.32)');
+        shGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = shGrad;
+        ctx.beginPath();
+        ctx.ellipse(x + bikeLean * 10 * scale, y - 3 * scale, 42 * scale * shadowScale, 12 * scale * shadowScale, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Translate to rear contact patch & apply bike lean
+        ctx.translate(x, y - jumpOffset);
+        ctx.rotate(bikeLean * 0.28);
+        ctx.scale(scale, scale);
+
+        const bodyShift = humanHangOff * 11; // Human rider shifts hips/torso into the turn
+
+        // =========================================================
+        // PART A: SUPERBIKE CHASSIS, FRONT FORKS, MIRRORS & TANK
+        // =========================================================
+
+        // Side Mirrors extending forward from front fairing
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 2.6;
+        for (const side of [-1, 1]) {
+          ctx.beginPath();
+          ctx.moveTo(side * 20, -68);
+          ctx.lineTo(side * 34, -77);
+          ctx.stroke();
+
+          // Mirror housing & reflective glass
+          ctx.fillStyle = '#0f172a';
+          ctx.beginPath();
+          ctx.ellipse(side * 36, -78, 6.5, 3.8, side * -0.25, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#bae6fd';
+          ctx.beginPath();
+          ctx.ellipse(side * 36, -78, 4.8, 2.4, side * -0.25, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Clip-on Handlebars & Brake/Clutch Levers
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(-29, -67);
+        ctx.lineTo(-14, -69);
+        ctx.moveTo(29, -67);
+        ctx.lineTo(14, -69);
+        ctx.stroke();
+
+        // Translucent Smoked Windscreen & Illuminated Dash
+        const screenGrad = ctx.createLinearGradient(0, -92, 0, -68);
+        screenGrad.addColorStop(0, 'rgba(15, 23, 42, 0.45)');
+        screenGrad.addColorStop(1, 'rgba(30, 41, 59, 0.85)');
+        ctx.fillStyle = screenGrad;
+        ctx.beginPath();
+        ctx.moveTo(-15, -70);
+        ctx.quadraticCurveTo(0, -95, 15, -70);
+        ctx.closePath();
+        ctx.fill();
+
+        // Digital cockpit dash glow visible behind windscreen
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.65)';
+        ctx.fillRect(-6, -73, 12, 3);
+
+        // Sculpted Fuel Tank (visible between rider's arms/thighs)
+        const tankGrad = ctx.createLinearGradient(-18, -68, 18, -50);
+        tankGrad.addColorStop(0, fairingColor);
+        tankGrad.addColorStop(0.45, fairingHighlight);
+        tankGrad.addColorStop(1, '#7f1d1d');
+        ctx.fillStyle = tankGrad;
+        ctx.beginPath();
+        ctx.moveTo(-17, -54);
+        ctx.quadraticCurveTo(-20, -68, -11, -72);
+        ctx.lineTo(11, -72);
+        ctx.quadraticCurveTo(20, -68, 17, -54);
+        ctx.closePath();
+        ctx.fill();
+
+        // Dual Titanium Exhaust Canisters (angled on both sides of rear wheel)
+        for (const side of [-1, 1]) {
+          ctx.save();
+          ctx.translate(side * 16, -26);
+          ctx.rotate(side * -0.12);
+          const exG = ctx.createLinearGradient(-4, 0, 4, 0);
+          exG.addColorStop(0, '#475569');
+          exG.addColorStop(0.5, '#cbd5e1');
+          exG.addColorStop(1, '#1e293b');
+          ctx.fillStyle = exG;
+          ctx.beginPath();
+          ctx.roundRect(-4.5, -14, 9, 20, 3);
+          ctx.fill();
+
+          // Carbon tip
+          ctx.fillStyle = '#090d16';
+          ctx.beginPath();
+          ctx.ellipse(0, -13, 3.8, 2.2, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Exhaust afterburner flame
+          if (nitro) {
+            const flameG = ctx.createRadialGradient(0, -13, 1, 0, -13, 9);
+            flameG.addColorStop(0, '#ffffff');
+            flameG.addColorStop(0.4, '#38bdf8');
+            flameG.addColorStop(1, 'rgba(56, 189, 248, 0)');
+            ctx.fillStyle = flameG;
+            ctx.beginPath();
+            ctx.arc(0, -13, 6 + Math.random() * 4, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+        }
+
+        // Brushed Aluminum Swingarm, Chain & Rear Brake Rotor
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(-15, -24, 4.5, 16);
+        ctx.fillRect(10.5, -24, 4.5, 16);
+
+        // Drilled steel brake disc on right side
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(10, -16, 2.5, 9, 0, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Gold rear shock spring visible above swingarm
+        ctx.fillStyle = '#eab308';
+        ctx.fillRect(-2.5, -36, 5, 8);
+
+        // Wide 3D Radial Rear Sport Tire
+        const tireGrad = ctx.createLinearGradient(-14, 0, 14, 0);
+        tireGrad.addColorStop(0, '#090d16');
+        tireGrad.addColorStop(0.25, '#1e293b');
+        tireGrad.addColorStop(0.5, '#334155');
+        tireGrad.addColorStop(0.75, '#1e293b');
+        tireGrad.addColorStop(1, '#090d16');
+        ctx.fillStyle = tireGrad;
+        ctx.beginPath();
+        ctx.roundRect(-14, -37, 28, 37, 11);
+        ctx.fill();
+
+        // Animated tire tread sipes
+        ctx.strokeStyle = 'rgba(9, 13, 22, 0.75)';
+        ctx.lineWidth = 1.4;
+        const treadShift = (wheelPhase % 1) * 7;
+        for (let ty = -33 + treadShift; ty < -4; ty += 7) {
+          ctx.beginPath();
+          ctx.moveTo(-11, ty + 2);
+          ctx.lineTo(-4, ty - 1);
+          ctx.moveTo(11, ty + 2);
+          ctx.lineTo(4, ty - 1);
+          ctx.stroke();
+        }
+
+        // Aerodynamic Tail Section & Rear Cowling
+        const tailGrad = ctx.createLinearGradient(-22, -48, 22, -32);
+        tailGrad.addColorStop(0, '#7f1d1d');
+        tailGrad.addColorStop(0.3, fairingColor);
+        tailGrad.addColorStop(0.5, fairingHighlight);
+        tailGrad.addColorStop(0.7, fairingColor);
+        tailGrad.addColorStop(1, '#7f1d1d');
+        ctx.fillStyle = tailGrad;
+        ctx.beginPath();
+        ctx.moveTo(-14, -33);
+        ctx.lineTo(14, -33);
+        ctx.lineTo(22, -48);
+        ctx.lineTo(14, -56);
+        ctx.lineTo(-14, -56);
+        ctx.lineTo(-22, -48);
+        ctx.closePath();
+        ctx.fill();
+
+        // Dark under-tail vent cutouts
+        ctx.fillStyle = '#090d16';
+        ctx.beginPath();
+        ctx.moveTo(-18, -45);
+        ctx.lineTo(-11, -37);
+        ctx.lineTo(-11, -43);
+        ctx.closePath();
+        ctx.moveTo(18, -45);
+        ctx.lineTo(11, -37);
+        ctx.lineTo(11, -43);
+        ctx.closePath();
+        ctx.fill();
+
+        // LED Tail & Brake Light Cluster
+        const brakeGlow = isBraking ? 22 : 10;
+        const tlGrad = ctx.createRadialGradient(0, -39, 1, 0, -39, brakeGlow);
+        tlGrad.addColorStop(0, '#ffffff');
+        tlGrad.addColorStop(0.25, '#ff1e42');
+        tlGrad.addColorStop(1, 'rgba(239, 68, 68, 0)');
+        ctx.fillStyle = tlGrad;
+        ctx.beginPath();
+        ctx.arc(0, -39, brakeGlow, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = isBraking ? '#fecdd3' : '#ef4444';
+        ctx.beginPath();
+        ctx.roundRect(-9, -41.5, 18, 4.5, 2);
+        ctx.fill();
+
+        // =========================================================
+        // PART B: ANATOMICALLY REALISTIC HUMAN RIDER
+        // =========================================================
+
+        // 1. Lower Legs, Calves, Knees & Armored Racing Boots on Footpegs
+        for (const side of [-1, 1]) {
+          // When leaning into a turn, the inside knee flares outward ("knee-down" posture)
+          const isInsideLeg = (side * humanHangOff) > 0.08;
+          const kneeSpread = isInsideLeg ? side * (25 + Math.abs(humanHangOff) * 9) : side * 20;
+          const kneeY = -51 + (isInsideLeg ? 3 : 0);
+          const pegX = side * 19;
+          const pegY = -27;
+          const hipX = bodyShift * 0.65 + side * 12;
+          const hipY = -53;
+
+          // Metallic Footpeg
+          ctx.strokeStyle = '#94a3b8';
+          ctx.lineWidth = 2.4;
+          ctx.beginPath();
+          ctx.moveTo(side * 15, pegY);
+          ctx.lineTo(side * 23, pegY);
+          ctx.stroke();
+
+          // Human Thigh (Hip -> Knee) in Leather Suit
+          ctx.strokeStyle = suitColor;
+          ctx.lineWidth = 10.5;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(hipX, hipY);
+          ctx.quadraticCurveTo((hipX + kneeSpread) * 0.52, hipY - 3, kneeSpread, kneeY);
+          ctx.stroke();
+
+          // Red Leather Thigh Stripe
+          ctx.strokeStyle = fairingColor;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(hipX + side * 2, hipY - 1);
+          ctx.lineTo(kneeSpread - side * 1, kneeY - 1);
+          ctx.stroke();
+
+          // Knee Slider Puck
+          ctx.fillStyle = '#e2e8f0';
+          ctx.beginPath();
+          ctx.ellipse(kneeSpread + side * 3, kneeY + 1, 2.5, 4.5, side * 0.25, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Human Calf (Knee -> Ankle/Boot)
+          ctx.strokeStyle = suitColor;
+          ctx.lineWidth = 8.5;
+          ctx.beginPath();
+          ctx.moveTo(kneeSpread, kneeY);
+          ctx.lineTo(pegX, pegY - 3);
+          ctx.stroke();
+
+          // Armored Racing Boot (Ankle -> Heel -> Toe on Footpeg)
+          ctx.fillStyle = '#0f172a';
+          ctx.beginPath();
+          ctx.moveTo(pegX - side * 3, pegY - 8);
+          ctx.lineTo(pegX + side * 4, pegY - 8);
+          ctx.lineTo(pegX + side * 5, pegY + 2);
+          ctx.lineTo(pegX - side * 4, pegY + 3);
+          ctx.closePath();
+          ctx.fill();
+
+          // Red heel cup armor on boot
+          ctx.fillStyle = fairingColor;
+          ctx.fillRect(pegX - 3, pegY - 5, 6, 4.5);
+        }
+
+        // 2. Human Pelvis, Waist & Articulated Upper Torso (shifts into turn)
+        ctx.save();
+        ctx.translate(bodyShift, 0);
+        ctx.rotate(humanHangOff * 0.09);
+
+        // Rider Hips / Seat Posture
+        const hipGrad = ctx.createLinearGradient(-15, -58, 15, -46);
+        hipGrad.addColorStop(0, '#090d16');
+        hipGrad.addColorStop(0.5, '#27272a');
+        hipGrad.addColorStop(1, '#090d16');
+        ctx.fillStyle = hipGrad;
+        ctx.beginPath();
+        ctx.moveTo(-13, -48);
+        ctx.quadraticCurveTo(-16, -54, -12, -60);
+        ctx.lineTo(12, -60);
+        ctx.quadraticCurveTo(16, -54, 13, -48);
+        ctx.quadraticCurveTo(0, -45, -13, -48);
+        ctx.closePath();
+        ctx.fill();
+
+        // Human Upper Arms, Elbows & Forearms Reaching to Handlebars
+        for (const side of [-1, 1]) {
+          const shoulderX = side * 17.5;
+          const shoulderY = -82;
+          // Compensate for bodyShift so hands stay anchored on handlebars!
+          const handX = side * 23 - bodyShift;
+          const handY = -68;
+          const elbowX = side * 24 - bodyShift * 0.35;
+          const elbowY = -72;
+
+          // Upper Arm (Deltoid -> Elbow)
+          ctx.strokeStyle = suitColor;
+          ctx.lineWidth = 8.2;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(shoulderX, shoulderY);
+          ctx.lineTo(elbowX, elbowY);
+          ctx.stroke();
+
+          // Red Leather Sleeve Panel on Upper Arm
+          ctx.strokeStyle = fairingColor;
+          ctx.lineWidth = 3.2;
+          ctx.beginPath();
+          ctx.moveTo(shoulderX + side * 1.5, shoulderY + 1);
+          ctx.lineTo(elbowX + side * 1, elbowY - 1);
+          ctx.stroke();
+
+          // Forearm (Elbow -> Wrist/Glove)
+          ctx.strokeStyle = '#18181b';
+          ctx.lineWidth = 6.5;
+          ctx.beginPath();
+          ctx.moveTo(elbowX, elbowY);
+          ctx.lineTo(handX, handY);
+          ctx.stroke();
+
+          // White/Metallic Elbow Slider Armor
+          ctx.fillStyle = '#e2e8f0';
+          ctx.beginPath();
+          ctx.ellipse(elbowX + side * 2, elbowY, 2.2, 4, side * -0.3, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Racing Glove gripping Handlebar
+          ctx.fillStyle = '#090d16';
+          ctx.beginPath();
+          ctx.arc(handX, handY, 4.2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = fairingColor;
+          ctx.fillRect(handX - 2.5, handY - 2, 5, 2.2);
+        }
+
+        // Sculpted Athletic Human Back (V-Taper from Narrow Waist to Broad Shoulders)
+        const torsoGrad = ctx.createLinearGradient(-19, -86, 19, -56);
+        torsoGrad.addColorStop(0, '#090d16');
+        torsoGrad.addColorStop(0.28, suitColor);
+        torsoGrad.addColorStop(0.5, '#3f3f46');
+        torsoGrad.addColorStop(0.72, suitColor);
+        torsoGrad.addColorStop(1, '#090d16');
+        ctx.fillStyle = torsoGrad;
+        ctx.beginPath();
+        ctx.moveTo(-12, -57); // Left waist
+        ctx.bezierCurveTo(-15, -67, -21, -76, -18.5, -84); // Left lat & deltoid curve
+        ctx.quadraticCurveTo(-10, -88, 0, -88);            // Upper trapezius & collar
+        ctx.quadraticCurveTo(10, -88, 18.5, -84);          // Right collar & shoulder
+        ctx.bezierCurveTo(21, -76, 15, -67, 12, -57);      // Right lat & waist taper
+        ctx.quadraticCurveTo(0, -54, -12, -57);
+        ctx.closePath();
+        ctx.fill();
+
+        // Crimson Red Ergonomic Leather Back Panels & White Piping Seams
+        ctx.fillStyle = fairingColor;
+        ctx.beginPath();
+        // Left shoulder-to-rib panel
+        ctx.moveTo(-17.5, -83);
+        ctx.quadraticCurveTo(-11, -85, -7, -84);
+        ctx.lineTo(-9, -63);
+        ctx.lineTo(-13, -62);
+        ctx.quadraticCurveTo(-17, -73, -17.5, -83);
+        // Right shoulder-to-rib panel
+        ctx.moveTo(17.5, -83);
+        ctx.quadraticCurveTo(11, -85, 7, -84);
+        ctx.lineTo(9, -63);
+        ctx.lineTo(13, -62);
+        ctx.quadraticCurveTo(17, -73, 17.5, -83);
+        ctx.fill();
+
+        // White racing suit piping along lats
+        ctx.strokeStyle = '#f8fafc';
+        ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.moveTo(-7, -84);
+        ctx.lineTo(-9, -61);
+        ctx.moveTo(7, -84);
+        ctx.lineTo(9, -61);
+        ctx.stroke();
+
+        // Titanium/Carbon Shoulder Armor Cups on Left & Right Deltoids
+        for (const side of [-1, 1]) {
+          ctx.fillStyle = '#334155';
+          ctx.beginPath();
+          ctx.ellipse(side * 17.5, -82.5, 4.2, 3.2, side * 0.45, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#cbd5e1';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+
+        // Aerodynamic Spine Protector / Speed Hump down center of back
+        const humpGrad = ctx.createLinearGradient(-5, -83, 5, -83);
+        humpGrad.addColorStop(0, '#18181b');
+        humpGrad.addColorStop(0.5, '#52525b');
+        humpGrad.addColorStop(1, '#18181b');
+        ctx.fillStyle = humpGrad;
+        ctx.beginPath();
+        ctx.moveTo(-4.8, -83);
+        ctx.lineTo(4.8, -83);
+        ctx.lineTo(3.2, -62);
+        ctx.lineTo(-3.2, -62);
+        ctx.closePath();
+        ctx.fill();
+
+        // Lumbar belt / lower back articulation ribs
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
+        ctx.lineWidth = 1.1;
+        for (const ry of [-60, -57.5, -55]) {
+          ctx.beginPath();
+          ctx.moveTo(-7, ry);
+          ctx.lineTo(7, ry);
+          ctx.stroke();
+        }
+
+        // 3. Human Neck & Full-Face Aerodynamic Racing Helmet
+        // Subtle human neck & collar beneath helmet
+        ctx.fillStyle = '#d6a384'; // subtle human nape/skin glimpse at collar
+        ctx.fillRect(-4.5, -89.5, 9, 3.5);
+        ctx.fillStyle = '#0f172a'; // balaclava/collar rim
+        ctx.fillRect(-5.5, -88.5, 11, 2.5);
+
+        // Head tilts slightly counter to bike lean to keep eyes level with horizon
+        ctx.save();
+        ctx.translate(humanHangOff * 2.2, -95.5);
+        ctx.rotate(-bikeLean * 0.1);
+
+        // Helmet Shell (3D contoured oval rather than flat circle)
+        const helmGrad = ctx.createRadialGradient(-4, -5, 2, 0, 0, 14.5);
+        helmGrad.addColorStop(0, '#475569');
+        helmGrad.addColorStop(0.45, helmetColor);
+        helmGrad.addColorStop(1, '#020617');
+        ctx.fillStyle = helmGrad;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 12.2, 13.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Crimson & White Racing Livery Stripes over Helmet Crown
+        ctx.fillStyle = fairingColor;
+        ctx.beginPath();
+        ctx.moveTo(-4.5, -13);
+        ctx.quadraticCurveTo(0, -14, 4.5, -13);
+        ctx.lineTo(3.2, 11);
+        ctx.lineTo(-3.2, 11);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = '#f8fafc';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(-5.2, -12.2);
+        ctx.lineTo(-3.8, 10.5);
+        ctx.moveTo(5.2, -12.2);
+        ctx.lineTo(3.8, 10.5);
+        ctx.stroke();
+
+        // Rear Aerodynamic Helmet Spoiler Wing & Exhaust Vents
+        ctx.fillStyle = '#090d16';
+        ctx.beginPath();
+        ctx.moveTo(-7.5, 2);
+        ctx.lineTo(7.5, 2);
+        ctx.lineTo(5.5, 7.5);
+        ctx.lineTo(-5.5, 7.5);
+        ctx.closePath();
+        ctx.fill();
+
+        // Side Visor Edges & Pivot Pods (visible from 3/4 rear angle)
+        ctx.fillStyle = '#0ea5e9';
+        ctx.beginPath();
+        ctx.arc(-10.8, -2, 2.2, 0, Math.PI * 2);
+        ctx.arc(10.8, -2, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Clear-Coat Glossy Specular Highlight Arc on Helmet
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(-3.5, -4, 7.5, Math.PI * 1.1, Math.PI * 1.65);
+        ctx.stroke();
+
+        ctx.restore(); // end head/helmet
+        ctx.restore(); // end rider torso shift
+        ctx.restore(); // end bike transform
+      }
+
+      // --- Canvas Helpers for Track Props ---
+      function drawQuad(x1, y1, x2, y2, x3, y3, x4, y4) {
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.lineTo(x3, y3);
+        ctx.lineTo(x4, y4);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      function drawFinishGantry(x, y, halfW) {
+        const h = halfW * 0.65;
+        const pillarW = Math.max(4, halfW * 0.065);
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fillRect(x - halfW, y - h, pillarW, h);
+        ctx.fillRect(x + halfW - pillarW, y - h, pillarW, h);
+
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(x - halfW, y - h, halfW * 2, Math.max(8, h * 0.24));
+        ctx.fillStyle = '#facc15';
+        ctx.font = `bold ${Math.max(9, Math.round(h * 0.16))}px system-ui, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText('APEX MOTO GP', x, y - h + Math.max(8, h * 0.18));
+      }
+
+      function drawForkGantry(x, y, halfW) {
+        if (halfW < 10) return;
+        const h = halfW * 0.64;
+        const pillarW = Math.max(3, halfW * 0.055);
+        const bannerH = Math.max(8, h * 0.26);
+
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(x - halfW, y - h, pillarW, h);
+        ctx.fillRect(x + halfW - pillarW, y - h, pillarW, h);
+
+        // Left branch sign (Speed Lane)
+        ctx.fillStyle = '#082f49';
+        ctx.fillRect(x - halfW, y - h, halfW - 2, bannerH);
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = Math.max(1, halfW * 0.015);
+        ctx.strokeRect(x - halfW, y - h, halfW - 2, bannerH);
+
+        // Right branch sign (Jump Route)
+        ctx.fillStyle = '#422006';
+        ctx.fillRect(x + 2, y - h, halfW - 2, bannerH);
+        ctx.strokeStyle = '#facc15';
+        ctx.strokeRect(x + 2, y - h, halfW - 2, bannerH);
+
+        if (halfW > 45) {
+          const fontSize = Math.max(8, Math.round(h * 0.13));
+          ctx.font = `bold ${fontSize}px system-ui, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.fillStyle = '#38bdf8';
+          ctx.fillText('◀ SPEED LANE', x - halfW * 0.5, y - h + bannerH * 0.68);
+          ctx.fillStyle = '#facc15';
+          ctx.fillText('JUMP ROUTE ▶', x + halfW * 0.5, y - h + bannerH * 0.68);
+        }
+      }
+
+      function drawRamp(x, y, w) {
+        const rGrad = ctx.createLinearGradient(x, y - w * 0.24, x, y);
+        rGrad.addColorStop(0, '#facc15');
+        rGrad.addColorStop(1, '#ca8a04');
+        ctx.fillStyle = rGrad;
+        ctx.beginPath();
+        ctx.moveTo(x - w / 2, y);
+        ctx.lineTo(x + w / 2, y);
+        ctx.lineTo(x + w / 2.5, y - w * 0.24);
+        ctx.lineTo(x - w / 2.5, y - w * 0.24);
+        ctx.closePath();
+        ctx.fill();
+
+        // Chevron stripes
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = Math.max(1.5, w * 0.04);
+        ctx.stroke();
+      }
+
+      function drawBoostPad(x, y, w) {
+        const h = Math.max(3, w * 0.18);
+        const bGrad = ctx.createLinearGradient(x, y - h, x, y);
+        bGrad.addColorStop(0, '#67e8f9');
+        bGrad.addColorStop(0.5, '#06b6d4');
+        bGrad.addColorStop(1, '#0e7490');
+        ctx.fillStyle = bGrad;
+        ctx.beginPath();
+        ctx.moveTo(x - w * 0.5, y);
+        ctx.lineTo(x + w * 0.5, y);
+        ctx.lineTo(x + w * 0.42, y - h);
+        ctx.lineTo(x - w * 0.42, y - h);
+        ctx.closePath();
+        ctx.fill();
+
+        // Glowing chevron arrow on boost pad
+        ctx.strokeStyle = '#ecfeff';
+        ctx.lineWidth = Math.max(1.5, w * 0.045);
+        ctx.beginPath();
+        ctx.moveTo(x - w * 0.24, y - h * 0.22);
+        ctx.lineTo(x, y - h * 0.78);
+        ctx.lineTo(x + w * 0.24, y - h * 0.22);
+        ctx.stroke();
+      }
+
+      function drawCone(x, y, w) {
+        ctx.fillStyle = '#ea580c';
+        ctx.beginPath();
+        ctx.moveTo(x, y - w * 1.15);
+        ctx.lineTo(x - w * 0.5, y);
+        ctx.lineTo(x + w * 0.5, y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(x - w * 0.23, y - w * 0.58, w * 0.46, w * 0.18);
+      }
+
+      // --- Speedometer Gauge ---
+      function drawSpeedometer(kmh) {
+        const W = speedoCanvas.width;
+        const H = speedoCanvas.height;
+        const cx = W / 2;
+        const cy = H - 14;
+        const radius = Math.min(cx - 10, cy - 8);
+
+        sCtx.clearRect(0, 0, W, H);
+
+        const startA = Math.PI * 0.82;
+        const endA = Math.PI * 2.18;
+        const totalA = endA - startA;
+
+        // Background track
+        sCtx.lineWidth = 8;
+        sCtx.lineCap = 'round';
+        sCtx.strokeStyle = '#1e293b';
+        sCtx.beginPath();
+        sCtx.arc(cx, cy, radius, startA, endA);
+        sCtx.stroke();
+
+        // Colored active arc
+        const ratio = Math.min(1, kmh / 200);
+        const grad = sCtx.createLinearGradient(cx - radius, cy, cx + radius, cy);
+        grad.addColorStop(0, '#22c55e');
+        grad.addColorStop(0.55, '#eab308');
+        grad.addColorStop(1, '#ef4444');
+        sCtx.strokeStyle = grad;
+        sCtx.beginPath();
+        sCtx.arc(cx, cy, radius, startA, startA + totalA * ratio);
+        sCtx.stroke();
+
+        // Minor & Major Tick Marks (0..200)
+        for (let val = 0; val <= 200; val += 10) {
+          const a = startA + (val / 200) * totalA;
+          const isMajor = val % 50 === 0;
+          const rOuter = radius - 4;
+          const rInner = isMajor ? radius - 10 : radius - 7;
+          sCtx.strokeStyle = isMajor ? '#f8fafc' : '#64748b';
+          sCtx.lineWidth = isMajor ? 1.6 : 1;
+          sCtx.beginPath();
+          sCtx.moveTo(cx + Math.cos(a) * rInner, cy + Math.sin(a) * rInner);
+          sCtx.lineTo(cx + Math.cos(a) * rOuter, cy + Math.sin(a) * rOuter);
+          sCtx.stroke();
+
+          if (isMajor) {
+            sCtx.fillStyle = '#cbd5e1';
+            sCtx.font = 'bold 8px system-ui, sans-serif';
+            sCtx.textAlign = 'center';
+            sCtx.textBaseline = 'middle';
+            const tx = cx + Math.cos(a) * (radius - 16);
+            const ty = cy + Math.sin(a) * (radius - 16);
+            sCtx.fillText(String(val), tx, ty);
+          }
+        }
+
+        // Glowing Red Needle
+        const needleA = startA + ratio * totalA;
+        sCtx.save();
+        sCtx.translate(cx, cy);
+        sCtx.rotate(needleA);
+        sCtx.fillStyle = '#ef4444';
+        sCtx.beginPath();
+        sCtx.moveTo(-4, -2.5);
+        sCtx.lineTo(radius - 8, 0);
+        sCtx.lineTo(-4, 2.5);
+        sCtx.closePath();
+        sCtx.fill();
+        sCtx.restore();
+
+        // Center hub cap
+        sCtx.fillStyle = '#334155';
+        sCtx.beginPath();
+        sCtx.arc(cx, cy, 4.5, 0, Math.PI * 2);
+        sCtx.fill();
+
+        // Digital Readout
+        sCtx.fillStyle = '#f8fafc';
+        sCtx.font = 'italic 800 18px system-ui, sans-serif';
+        sCtx.textAlign = 'center';
+        sCtx.fillText(String(kmh), cx, cy - 11);
+        sCtx.fillStyle = '#94a3b8';
+        sCtx.font = '600 9px system-ui, sans-serif';
+        sCtx.fillText('km/h', cx, cy + 9);
+      }
+
+      // --- Circular Minimap ---
+      function drawMinimap() {
+        const MW = minimapCanvas.width;
+        const MH = minimapCanvas.height;
+        mCtx.clearRect(0, 0, MW, MH);
+        if (!minimapPoints.length) return;
+
+        // Track loop base
+        mCtx.lineWidth = 4.5;
+        mCtx.lineCap = 'round';
+        mCtx.lineJoin = 'round';
+        mCtx.strokeStyle = 'rgba(226, 232, 240, 0.78)';
+        mCtx.beginPath();
+        minimapPoints.forEach((p, idx) => {
+          if (idx === 0) mCtx.moveTo(p.nx, p.ny);
+          else mCtx.lineTo(p.nx, p.ny);
+        });
+        mCtx.closePath();
+        mCtx.stroke();
+
+        // Highlight progress along current lap in green
+        const pIdx = ((Math.floor((playerZ / trackLength) * minimapPoints.length) % minimapPoints.length) + minimapPoints.length) % minimapPoints.length;
+        if (pIdx > 1) {
+          mCtx.strokeStyle = '#22c55e';
+          mCtx.lineWidth = 4.5;
+          mCtx.beginPath();
+          for (let i = 0; i <= pIdx; i++) {
+            const pt = minimapPoints[i];
+            if (i === 0) mCtx.moveTo(pt.nx, pt.ny);
+            else mCtx.lineTo(pt.nx, pt.ny);
+          }
+          mCtx.stroke();
+        }
+
+        // Rival dots
+        for (const r of rivals) {
+          const rIdx = ((Math.floor((r.z / trackLength) * minimapPoints.length) % minimapPoints.length) + minimapPoints.length) % minimapPoints.length;
+          const pt = minimapPoints[rIdx];
+          if (!pt) continue;
+          mCtx.fillStyle = r.bodyColor;
+          mCtx.beginPath();
+          mCtx.arc(pt.nx, pt.ny, 3.2, 0, Math.PI * 2);
+          mCtx.fill();
+        }
+
+        // Player dot
+        const pPt = minimapPoints[pIdx];
+        if (pPt) {
+          mCtx.fillStyle = '#ef4444';
+          mCtx.strokeStyle = '#ffffff';
+          mCtx.lineWidth = 1.8;
+          mCtx.beginPath();
+          mCtx.arc(pPt.nx, pPt.ny, 4.8, 0, Math.PI * 2);
+          mCtx.fill();
+          mCtx.stroke();
+        }
+      }
+
+      // --- Input Handling ---
+      const keyMap = {
+        ArrowLeft: 'left', KeyA: 'left',
+        ArrowRight: 'right', KeyD: 'right',
+        ArrowUp: 'up', KeyW: 'up',
+        ArrowDown: 'down', KeyS: 'down',
+        Space: 'jump'
+      };
+
+      function syncControlButtons() {
+        document.querySelectorAll('.key-btn[data-control]').forEach(btn => {
+          const ctrl = btn.dataset.control;
+          btn.classList.toggle('is-active', Boolean(input[ctrl]));
+        });
+      }
+
+      window.addEventListener('keydown', (e) => {
+        if (e.code === 'KeyM' && (gameState === 'menu' || gameState === 'finished')) {
+          selectMap(currentMap + 1);
+        }
+        if (e.code === 'KeyN' && !e.repeat && (gameState === 'menu' || gameState === 'finished')) {
+          selectDiff(currentDiff + 1);
+        }
+        const action = keyMap[e.code];
+        if (action) {
+          if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
+            if (document.activeElement?.tagName !== 'BUTTON' || e.code !== 'Space') {
+              e.preventDefault();
+            }
+          }
+          input[action] = true;
+          syncControlButtons();
+        }
+      });
+
+      window.addEventListener('keyup', (e) => {
+        const action = keyMap[e.code];
+        if (action) {
+          input[action] = false;
+          syncControlButtons();
+        }
+      });
+
+      document.querySelectorAll('.key-btn[data-control]').forEach(btn => {
+        const ctrl = btn.dataset.control;
+        const press = (e) => {
+          e.preventDefault();
+          if (btn.setPointerCapture && e.pointerId !== undefined) {
+            btn.setPointerCapture(e.pointerId);
+          }
+          input[ctrl] = true;
+          syncControlButtons();
+        };
+        const release = (e) => {
+          if (btn.hasPointerCapture && e.pointerId !== undefined && btn.hasPointerCapture(e.pointerId)) {
+            btn.releasePointerCapture(e.pointerId);
+          }
+          input[ctrl] = false;
+          syncControlButtons();
+        };
+        btn.addEventListener('pointerdown', press);
+        btn.addEventListener('pointerup', release);
+        btn.addEventListener('pointercancel', release);
+      });
+
+      const mapPicker = document.getElementById('mapPicker');
+      const quickRouteBar = document.getElementById('quickRouteBar');
+      MAPS.forEach((m, i) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'map-btn';
+        const swatch = document.createElement('span');
+        swatch.className = 'route-swatch';
+        swatch.style.background = m.swatch;
+        b.append(swatch, document.createTextNode(m.name));
+        b.addEventListener('click', () => selectMap(i));
+        mapPicker.appendChild(b);
+
+        if (quickRouteBar) {
+          const qb = document.createElement('button');
+          qb.type = 'button';
+          qb.className = 'route-pill-btn';
+          const qSwatch = document.createElement('span');
+          qSwatch.className = 'route-swatch';
+          qSwatch.style.background = m.swatch;
+          qb.append(qSwatch, document.createTextNode(m.shortName));
+          qb.addEventListener('click', () => {
+            const wasRacing = gameState === 'racing' || gameState === 'countdown';
+            selectMap(i);
+            if (wasRacing) resetRace(true);
+          });
+          quickRouteBar.appendChild(qb);
+        }
+      });
+
+      const diffPicker = document.getElementById('diffPicker');
+      DIFFS.forEach((d, i) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'map-btn';
+        b.textContent = d.name;
+        b.addEventListener('click', () => selectDiff(i));
+        diffPicker.appendChild(b);
+      });
+      function selectDiff(i) {
+        currentDiff = ((i % DIFFS.length) + DIFFS.length) % DIFFS.length;
+        selectMap(currentMap, true);
+        announce(`Difficulty selected: ${DIFFS[currentDiff].name}`);
+      }
+
+      function selectMap(i, silent) {
+        currentMap = ((i % MAPS.length) + MAPS.length) % MAPS.length;
+        skyHeading = 0;
+        buildTrack();
+        resetRace(false);
+        modalTitle.textContent = 'APEX MOTO GP';
+        modalDesc.textContent = `${P.name} · ${DIFFS[currentDiff].name} (${DIFFS[currentDiff].tag}): ${P.blurb} Steer with A/D or Arrows, accelerate with W/Up, brake with S/Down, and jump ramps and hazards with Space.`;
+        startBtn.textContent = 'Start Race';
+        [...mapPicker.children].forEach((b, k) => b.setAttribute('aria-pressed', String(k === currentMap)));
+        [...diffPicker.children].forEach((b, k) => b.setAttribute('aria-pressed', String(k === currentDiff)));
+        if (quickRouteBar) {
+          [...quickRouteBar.children].forEach((b, k) => b.setAttribute('aria-pressed', String(k === currentMap)));
+        }
+        if (!silent) announce(`Map selected: ${P.name}`);
+      }
+
+      startBtn.addEventListener('click', () => {
+        resetRace(true);
+      });
+
+      restartBtn.addEventListener('click', () => {
+        resetRace(true);
+      });
+
+      if (routesMenuBtn) {
+        routesMenuBtn.addEventListener('click', () => {
+          resetRace(false);
+          updateEngineSound();
+        });
+      }
+
+      soundToggleBtn.addEventListener('click', () => {
+        soundEnabled = !soundEnabled;
+        soundToggleBtn.setAttribute('aria-pressed', String(soundEnabled));
+        soundLabel.textContent = soundEnabled ? 'Sound On' : 'Sound Off';
+        if (soundEnabled) {
+          initAudio();
+        } else {
+          updateEngineSound();
+        }
+      });
+
+      // --- Main Loop ---
+      let lastTime = performance.now();
+      function loop(now) {
+        const dt = Math.min(0.05, (now - lastTime) / 1000);
+        lastTime = now;
+        update(dt);
+        render();
+        requestAnimationFrame(loop);
+      }
+
+      buildEnvironmentAssets();
+      selectMap(0, true);
+      requestAnimationFrame(loop);
+    })();
+  </script>
+</body>
+</html>
