@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Apex Moto GP — Realistic 3D Motorcycle Racing</title>
   <style>
     @layer reset, base, components, utilities;
@@ -26,6 +26,7 @@
       :root {
         color-scheme: dark;
         --in-oklab: ;
+        --target-size: 28px;
         --bg-deep: #030712;
         --bg-panel: #0a1428;
         --bg-card: #0e1c38;
@@ -39,9 +40,15 @@
         --accent-green: #22c55e;
         --accent-red: #ef4444;
         --focus-ring: #38bdf8;
-        --radius-lg: 18px;
-        --radius-md: 12px;
-        --radius-sm: 8px;
+        --radius-lg: 16px;
+        --radius-md: 10px;
+        --radius-sm: 7px;
+      }
+
+      @media (pointer: coarse) {
+        :root {
+          --target-size: 44px;
+        }
       }
 
       @supports (background: linear-gradient(in oklab, white, black)) {
@@ -51,7 +58,7 @@
       }
 
       body {
-        min-height: 100dvh;
+        min-block-size: 100dvh;
         background:
           radial-gradient(circle at 18% 12%, rgba(43, 142, 255, 0.22), transparent 46%),
           radial-gradient(circle at 82% 88%, rgba(56, 189, 248, 0.16), transparent 46%),
@@ -61,9 +68,18 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
-        padding: 12px;
-        line-height: 1.4;
+        justify-content: flex-start;
+        padding: 6px;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+      }
+
+      h1, h2, h3 {
+        text-wrap: balance;
+      }
+
+      p {
+        text-wrap: pretty;
       }
 
       :where(button, a, [tabindex]):focus-visible {
@@ -74,37 +90,39 @@
 
     @layer components {
       .cabinet {
-        width: min(100%, 820px);
+        inline-size: min(100%, 1080px);
+        container: cabinet / inline-size;
         background: linear-gradient(to bottom var(--in-oklab), #0c1836 0%, #060d20 100%);
         border: 2px solid var(--border-neon);
-        border-radius: 20px;
+        border-radius: var(--radius-lg);
         box-shadow:
           0 4px 12px rgba(0, 0, 0, 0.6),
           0 16px 40px rgba(0, 0, 0, 0.75),
           0 0 36px rgba(43, 142, 255, 0.32),
           inset 0 1px 0 rgba(255, 255, 255, 0.14);
-        overflow: hidden;
+        overflow: clip;
       }
 
       .cabinet-header {
         display: flex;
-        align-items: center;
+        flex-wrap: wrap;
+        align-items: safe center;
         justify-content: space-between;
-        gap: 12px;
-        padding: 10px 16px;
-        background: rgba(5, 11, 26, 0.92);
-        border-bottom: 1px solid var(--border-subtle);
+        gap: 8px;
+        padding: max(6px, env(safe-area-inset-top, 6px)) 12px 6px;
+        background: rgba(5, 11, 26, 0.94);
+        border-block-end: 1px solid var(--border-subtle);
       }
 
       .window-dots {
         display: flex;
         align-items: center;
-        gap: 7px;
+        gap: 6px;
       }
 
       .dot {
-        width: 11px;
-        height: 11px;
+        inline-size: 10px;
+        block-size: 10px;
         border-radius: 50%;
         display: inline-block;
       }
@@ -114,8 +132,8 @@
 
       .brand-title {
         margin: 0;
-        font-size: 0.95rem;
-        font-weight: 700;
+        font-size: 0.9rem;
+        font-weight: 800;
         letter-spacing: 0.05em;
         color: var(--text-primary);
         display: flex;
@@ -125,23 +143,24 @@
 
       .header-actions {
         display: flex;
-        align-items: center;
-        gap: 8px;
+        flex-wrap: wrap;
+        align-items: safe center;
+        gap: 6px;
       }
 
       .icon-btn {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 6px;
-        min-height: 32px;
-        min-width: 32px;
-        padding: 4px 11px;
+        gap: 5px;
+        min-block-size: max(28px, var(--target-size));
+        min-inline-size: max(28px, var(--target-size));
+        padding: 3px 10px;
         border-radius: var(--radius-sm);
         border: 1px solid var(--border-subtle);
         background: var(--bg-card);
         color: var(--text-primary);
-        font-size: 0.8rem;
+        font-size: 0.76rem;
         font-weight: 600;
         cursor: pointer;
         transition: background-color 140ms ease, border-color 140ms ease;
@@ -157,29 +176,31 @@
         background: rgba(56, 189, 248, 0.16);
       }
 
-      /* Viewport */
+      /* Enlarged Main Game Viewport for Maximum Immersion */
       .viewport-wrap {
         position: relative;
-        width: 100%;
-        aspect-ratio: 16 / 10;
+        inline-size: 100%;
+        aspect-ratio: 16 / 9.2;
+        min-block-size: clamp(340px, 60dvh, 640px);
         background: #091326;
-        overflow: hidden;
-        border-bottom: 1px solid var(--border-subtle);
+        overflow: clip;
+        border-block-end: 1px solid var(--border-subtle);
       }
 
       #gameCanvas {
         display: block;
-        width: 100%;
-        height: 100%;
+        inline-size: 100%;
+        block-size: 100%;
+        object-fit: cover;
         touch-action: none;
       }
 
-      /* In-viewport HUD */
+      /* Compact In-Viewport HUD */
       .hud-overlay {
         position: absolute;
         inset: 0;
         pointer-events: none;
-        padding: 14px;
+        padding: 8px 10px;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
@@ -189,69 +210,91 @@
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        gap: 12px;
+        gap: 8px;
       }
 
       .hud-pill {
-        background: rgba(6, 13, 28, 0.78);
-        border: 1px solid rgba(148, 163, 184, 0.36);
-        backdrop-filter: blur(8px);
-        border-radius: 10px;
-        padding: 6px 14px;
-        box-shadow:
-          0 2px 6px rgba(0, 0, 0, 0.35),
-          0 8px 20px rgba(0, 0, 0, 0.45);
+        background: rgba(6, 13, 28, 0.68);
+        border: 1px solid rgba(148, 163, 184, 0.32);
+        backdrop-filter: blur(6px);
+        border-radius: 8px;
+        padding: 3px 9px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+      }
+
+      .hud-pill--compact {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .hud-pill--speed {
+        padding: 2px 8px;
       }
 
       .hud-pill-row {
         display: flex;
         align-items: baseline;
-        gap: 6px;
+        gap: 4px;
         font-weight: 700;
         font-variant-numeric: tabular-nums;
       }
 
       .hud-label {
         color: #cbd5e1;
-        font-size: 0.85rem;
+        font-size: 0.7rem;
         font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
       }
 
       .hud-val-gold {
         color: var(--accent-gold);
-        font-size: 1.25rem;
+        font-size: 0.92rem;
         font-style: italic;
       }
 
       .hud-val-white {
         color: var(--text-primary);
-        font-size: 1rem;
+        font-size: 0.8rem;
       }
 
+      /* Smaller, Unobtrusive Speed Indicator */
       .hud-speed-val {
         color: var(--accent-gold);
-        font-size: 1.4rem;
+        font-size: 0.92rem;
         font-style: italic;
+      }
+
+      .hud-route-badge {
+        background: rgba(6, 13, 28, 0.68);
+        border: 1px solid rgba(56, 189, 248, 0.38);
+        backdrop-filter: blur(6px);
+        border-radius: 999px;
+        padding: 2px 10px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--accent-cyan);
+        letter-spacing: 0.02em;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
       }
 
       .minimap-wrap {
         position: absolute;
-        right: 14px;
-        top: 78px;
-        width: 98px;
-        height: 98px;
+        inset-inline-end: 10px;
+        inset-block-start: 40px;
+        inline-size: 70px;
+        block-size: 70px;
         border-radius: 50%;
-        background: rgba(6, 12, 26, 0.82);
-        border: 2px solid rgba(203, 213, 225, 0.45);
-        box-shadow:
-          0 4px 10px rgba(0, 0, 0, 0.45),
-          0 10px 24px rgba(0, 0, 0, 0.55);
-        overflow: hidden;
+        background: rgba(6, 12, 26, 0.76);
+        border: 1.5px solid rgba(203, 213, 225, 0.42);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        overflow: clip;
       }
 
       #minimapCanvas {
-        width: 100%;
-        height: 100%;
+        inline-size: 100%;
+        block-size: 100%;
         display: block;
       }
 
@@ -262,11 +305,12 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
-        background: rgba(3, 8, 20, 0.72);
+        justify-content: safe center;
+        background: rgba(3, 8, 20, 0.76);
         backdrop-filter: blur(5px);
         text-align: center;
-        padding: 22px;
+        padding: 14px;
+        overflow-y: auto;
         z-index: 5;
       }
 
@@ -275,29 +319,74 @@
       }
 
       .race-modal h2 {
-        margin: 0 0 8px;
-        font-size: clamp(1.5rem, 4vw, 2.25rem);
+        margin: 0 0 6px;
+        font-size: clamp(1.25rem, 0.9rem + 1.8vw, 2rem);
         letter-spacing: 0.04em;
         color: var(--accent-gold);
         text-shadow: 0 2px 14px rgba(250, 204, 21, 0.4);
       }
 
       .race-modal p {
-        margin: 0 0 18px;
+        margin: 0 0 12px;
         color: var(--text-primary);
-        max-width: 44ch;
-        font-size: 0.96rem;
+        max-inline-size: 52ch;
+        font-size: 0.86rem;
+      }
+
+      .map-picker {
+        display: flex;
+        flex-wrap: wrap;
+        flex-wrap: balance;
+        justify-content: center;
+        gap: 6px;
+        margin: 0 0 10px;
+        max-inline-size: 640px;
+      }
+
+      .map-btn {
+        min-block-size: max(34px, var(--target-size));
+        padding: 6px 12px;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-subtle);
+        background: var(--bg-card);
+        color: var(--text-muted);
+        font-weight: 600;
+        font-size: 0.82rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .map-btn:hover {
+        color: var(--text-primary);
+        border-color: var(--border-neon);
+      }
+
+      .map-btn[aria-pressed="true"] {
+        color: var(--text-primary);
+        border-color: var(--accent-gold);
+        background: var(--bg-card-elevated);
+        box-shadow: 0 0 12px rgba(250, 204, 21, 0.25);
+      }
+
+      .route-swatch {
+        inline-size: 8px;
+        block-size: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        flex-shrink: 0;
       }
 
       .primary-btn {
-        min-height: 44px;
-        padding: 10px 28px;
+        min-block-size: max(42px, var(--target-size));
+        padding: 8px 26px;
         border-radius: 999px;
         border: 2px solid #60a5fa;
         background: linear-gradient(to bottom var(--in-oklab), #2563eb 0%, #1d4ed8 100%);
         color: #ffffff;
         font-weight: 700;
-        font-size: 1rem;
+        font-size: 0.96rem;
         cursor: pointer;
         box-shadow:
           0 4px 12px rgba(0, 0, 0, 0.4),
@@ -321,7 +410,7 @@
         align-items: center;
         justify-content: center;
         pointer-events: none;
-        font-size: clamp(3.2rem, 9vw, 5.2rem);
+        font-size: clamp(2.4rem, 1.5rem + 4vw, 4.8rem);
         font-weight: 900;
         font-style: italic;
         color: var(--accent-gold);
@@ -333,61 +422,228 @@
         display: none;
       }
 
-      /* Dashboard Panel */
+      /* Dashboard Panel: Control Panel Moved Upward Directly Below Main Screen */
       .dashboard {
-        padding: 14px 16px 16px;
+        padding: 8px 12px max(12px, env(safe-area-inset-bottom, 12px));
         display: grid;
-        gap: 12px;
+        gap: 8px;
         background: linear-gradient(to bottom var(--in-oklab), #09132b 0%, #050b1a 100%);
       }
 
+      /* Controls Bar (Placed at Top of Dashboard for Ergonomic Phone Thumb Reach) */
+      .controls-card {
+        background: linear-gradient(to bottom var(--in-oklab), #102042 0%, #0b1730 100%);
+        border: 1px solid rgba(56, 189, 248, 0.42);
+        border-radius: var(--radius-md);
+        padding: 8px 12px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 4px 12px rgba(0, 0, 0, 0.35);
+      }
+
+      .controls-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-block-end: 6px;
+      }
+
+      .controls-heading {
+        margin: 0;
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--accent-cyan);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .controls-hint {
+        font-size: 0.72rem;
+        color: var(--text-muted);
+      }
+
+      .controls-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .control-cluster {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .control-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+      }
+
+      .key-pair {
+        display: flex;
+        gap: 8px;
+      }
+
+      .key-btn {
+        min-inline-size: 58px;
+        min-block-size: max(44px, var(--target-size));
+        padding: 6px 14px;
+        border-radius: 9px;
+        border: 1px solid rgba(148, 163, 184, 0.5);
+        background: #081226;
+        color: var(--text-primary);
+        font-weight: 800;
+        font-size: 0.92rem;
+        cursor: pointer;
+        user-select: none;
+        touch-action: none;
+        box-shadow: 0 3px 0 rgba(0, 0, 0, 0.65);
+        transition: background-color 80ms ease, border-color 80ms ease, transform 80ms ease;
+      }
+
+      .key-btn--gas {
+        border-color: rgba(34, 197, 94, 0.55);
+        background: rgba(20, 83, 45, 0.38);
+        min-inline-size: 68px;
+      }
+
+      .key-btn--brake {
+        border-color: rgba(239, 68, 68, 0.5);
+        background: rgba(127, 29, 29, 0.32);
+      }
+
+      .key-btn--wide {
+        min-inline-size: 86px;
+        border-color: rgba(250, 204, 21, 0.5);
+        background: rgba(113, 63, 18, 0.32);
+      }
+
+      .key-btn.is-active,
+      .key-btn:active {
+        background: rgba(43, 142, 255, 0.42);
+        border-color: var(--accent-cyan);
+        transform: translateY(1px);
+      }
+
+      .control-caption {
+        font-size: 0.68rem;
+        color: var(--text-muted);
+        font-weight: 600;
+      }
+
+      /* Quick Route Selector Bar */
+      .route-bar {
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        padding: 6px 10px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: safe center;
+        justify-content: space-between;
+        gap: 6px;
+      }
+
+      .route-bar-label {
+        font-size: 0.74rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .route-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+      }
+
+      .route-pill-btn {
+        min-block-size: max(30px, var(--target-size));
+        padding: 3px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(148, 163, 184, 0.32);
+        background: #081226;
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: border-color 120ms ease, color 120ms ease, background-color 120ms ease;
+      }
+
+      .route-pill-btn:hover {
+        color: var(--text-primary);
+        border-color: var(--accent-cyan);
+      }
+
+      .route-pill-btn[aria-pressed="true"] {
+        color: var(--text-primary);
+        border-color: var(--accent-gold);
+        background: var(--bg-card-elevated);
+      }
+
+      /* Compact Telemetry & Smaller Speedometer Strip at Bottom */
       .telemetry-grid {
         display: grid;
-        grid-template-columns: 1.15fr 1fr;
-        gap: 12px;
+        grid-template-columns: auto 1fr;
+        align-items: stretch;
+        gap: 8px;
       }
 
       .gauge-card {
         background: var(--bg-card);
         border: 1px solid var(--border-subtle);
         border-radius: var(--radius-md);
-        padding: 10px 14px;
+        padding: 4px 10px;
         display: flex;
         align-items: center;
         justify-content: center;
         position: relative;
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 4px 12px rgba(0, 0, 0, 0.3);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
       }
 
       #speedoCanvas {
-        width: 100%;
-        max-width: 260px;
-        height: auto;
+        inline-size: 118px;
+        max-inline-size: 118px;
+        block-size: auto;
         display: block;
       }
 
       .stats-stack {
         display: grid;
-        gap: 8px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
       }
 
       .stat-card {
         background: var(--bg-card);
         border: 1px solid var(--border-subtle);
         border-radius: var(--radius-md);
-        padding: 8px 14px;
+        padding: 6px 10px;
         display: flex;
         align-items: center;
-        gap: 12px;
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 4px 10px rgba(0, 0, 0, 0.25);
+        gap: 8px;
+        min-inline-size: 0;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
       }
 
       .stat-icon {
-        width: 28px;
-        height: 28px;
+        inline-size: 20px;
+        block-size: 20px;
         flex-shrink: 0;
         color: var(--accent-gold);
-        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
       }
 
       .stat-icon--flag {
@@ -401,118 +657,85 @@
       .stat-info {
         display: flex;
         flex-direction: column;
+        min-inline-size: 0;
       }
 
       .stat-label {
-        font-size: 0.78rem;
+        font-size: 0.68rem;
         color: var(--text-muted);
         font-weight: 600;
       }
 
       .stat-value {
-        font-size: 1.25rem;
+        font-size: 0.98rem;
         font-weight: 800;
         font-variant-numeric: tabular-nums;
         color: var(--text-primary);
-        line-height: 1.2;
+        line-height: 1.15;
       }
 
       .stat-value--gold {
         color: var(--accent-gold);
       }
 
-      /* Controls Bar */
-      .controls-card {
-        background: var(--bg-card);
-        border: 1px solid var(--border-subtle);
-        border-radius: var(--radius-md);
-        padding: 10px 14px;
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 4px 10px rgba(0, 0, 0, 0.25);
-      }
-
-      .controls-heading {
-        margin: 0 0 10px;
-        font-size: 0.9rem;
-        font-weight: 700;
-        color: var(--text-primary);
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .controls-row {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: space-between;
-        gap: 10px;
-      }
-
-      .control-group {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 4px;
-      }
-
-      .key-pair {
-        display: flex;
-        gap: 6px;
-      }
-
-      .key-btn {
-        min-width: 44px;
-        min-height: 36px;
-        padding: 4px 12px;
-        border-radius: 7px;
-        border: 1px solid rgba(148, 163, 184, 0.45);
-        background: #091329;
-        color: var(--text-primary);
-        font-weight: 700;
-        font-size: 0.9rem;
-        cursor: pointer;
-        user-select: none;
-        box-shadow: 0 2px 0 rgba(0, 0, 0, 0.55);
-        transition: background-color 80ms ease, border-color 80ms ease, transform 80ms ease;
-      }
-
-      .key-btn--wide {
-        min-width: 102px;
-      }
-
-      .key-btn.is-active,
-      .key-btn:active {
-        background: rgba(43, 142, 255, 0.36);
-        border-color: var(--accent-cyan);
-        transform: translateY(1px);
-      }
-
-      .control-caption {
-        font-size: 0.78rem;
-        color: var(--text-muted);
-        font-weight: 600;
-      }
-
       .visually-hidden:where(:not(:focus-within, :active)) {
         position: absolute !important;
         clip-path: inset(50%) !important;
         overflow: hidden !important;
-        width: 1px !important;
-        height: 1px !important;
+        inline-size: 1px !important;
+        block-size: 1px !important;
         margin: -1px !important;
         padding: 0 !important;
         border: 0 !important;
         white-space: nowrap !important;
       }
 
-      @media (max-width: 600px) {
+      @container cabinet (inline-size < 560px) {
         .telemetry-grid {
-          grid-template-columns: 1fr;
+          grid-template-columns: auto 1fr;
+        }
+        #speedoCanvas {
+          inline-size: 96px;
+          max-inline-size: 96px;
+        }
+        .stat-card {
+          padding: 4px 7px;
+          gap: 5px;
+        }
+        .stat-icon {
+          inline-size: 16px;
+          block-size: 16px;
+        }
+        .stat-value {
+          font-size: 0.85rem;
         }
         .minimap-wrap {
-          width: 76px;
-          height: 76px;
-          top: 68px;
+          inline-size: 56px;
+          block-size: 56px;
+          inset-block-start: 36px;
+        }
+        .key-btn {
+          min-inline-size: 56px;
+          min-block-size: 50px;
+          padding: 6px 12px;
+        }
+        .key-btn--wide {
+          min-inline-size: 72px;
+        }
+      }
+
+      @media (max-width: 640px) {
+        body {
+          padding: 0;
+        }
+        .cabinet {
+          border-radius: 0;
+          border-inline: none;
+        }
+        .viewport-wrap {
+          aspect-ratio: auto;
+          block-size: clamp(320px, 53dvh, 470px);
+          min-block-size: 320px;
         }
       }
 
@@ -521,6 +744,7 @@
         .gauge-card,
         .stat-card,
         .controls-card,
+        .route-bar,
         .hud-pill,
         .key-btn,
         .icon-btn,
@@ -546,8 +770,14 @@
         <span>APEX MOTO GP</span>
       </h1>
       <div class="header-actions">
+        <button type="button" id="routesMenuBtn" class="icon-btn" aria-label="Choose route and difficulty">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+            <path d="M9 20l-5.447-2.724A1 1 0 0 1 3 16.382V5.618a1 1 0 0 1 1.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0 0 21 18.382V7.618a1 1 0 0 0-.553-.894L15 4m0 13V4m0 0L9 7"/>
+          </svg>
+          <span>Routes</span>
+        </button>
         <button type="button" id="soundToggleBtn" class="icon-btn" aria-pressed="true" aria-label="Toggle engine sound">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <path d="M11 5L6 9H2v6h4l5 4V5z"/>
             <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
             <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
@@ -555,7 +785,7 @@
           <span id="soundLabel">Sound On</span>
         </button>
         <button type="button" id="restartBtn" class="icon-btn" aria-label="Restart race">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
             <path d="M3 12a9 9 0 1 0 3-6.7L3 8"/>
             <path d="M3 3v5h5"/>
           </svg>
@@ -565,25 +795,27 @@
     </header>
 
     <div class="viewport-wrap">
-      <canvas id="gameCanvas" width="960" height="600" aria-label="Motorcycle race track"></canvas>
+      <canvas id="gameCanvas" width="1024" height="600" aria-label="Motorcycle race track"></canvas>
 
       <div class="hud-overlay" aria-hidden="true">
         <div class="hud-top">
-          <div class="hud-pill">
+          <div class="hud-pill hud-pill--compact">
             <div class="hud-pill-row">
-              <span class="hud-label">Pos:</span>
+              <span class="hud-label">Pos</span>
               <span id="hudPos" class="hud-val-gold">1</span>
-              <span class="hud-val-white">/ 6</span>
+              <span class="hud-val-white">/6</span>
             </div>
             <div class="hud-pill-row">
-              <span class="hud-label">Lap:</span>
-              <span id="hudLap" class="hud-val-white">1 / 3</span>
+              <span class="hud-label">Lap</span>
+              <span id="hudLap" class="hud-val-white">1/3</span>
             </div>
           </div>
 
-          <div class="hud-pill">
-            <div class="hud-label">Speed:</div>
+          <div id="hudRouteBadge" class="hud-route-badge">Route 1: Alpine Pass</div>
+
+          <div class="hud-pill hud-pill--speed">
             <div class="hud-pill-row">
+              <span class="hud-label">Spd</span>
               <span id="hudSpeed" class="hud-speed-val">0</span>
               <span class="hud-val-white">km/h</span>
             </div>
@@ -599,15 +831,65 @@
 
       <div id="raceModal" class="race-modal" role="dialog" aria-labelledby="modalTitle">
         <h2 id="modalTitle">APEX MOTO GP</h2>
-        <p id="modalDesc">Carve through alpine passes, pine forests, and stone mountain tunnels against 5 pro riders. Steer with A/D or Arrows, Accelerate with W/Up, Brake with S/Down, and Jump over ramps &amp; hazards with Space.</p>
+        <p id="modalDesc">Choose from 6 world routes and 3 layout modes, plus live mid-lap route forks (Speed Lane vs Jump Shortcut).</p>
+        <div id="mapPicker" class="map-picker" role="group" aria-label="Choose a route (or press M)"></div>
+        <div id="diffPicker" class="map-picker" role="group" aria-label="Choose a route layout difficulty (or press N)"></div>
         <button type="button" id="startBtn" class="primary-btn">Start Race</button>
       </div>
     </div>
 
-    <section class="dashboard" aria-label="Telemetry and Controls">
+    <section class="dashboard" aria-label="Controls, Routes, and Telemetry">
+      <div class="controls-card">
+        <div class="controls-header-row">
+          <h2 class="controls-heading">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+            </svg>
+            Controls
+          </h2>
+          <span class="controls-hint">Slide thumb to steer · Multi-touch ready</span>
+        </div>
+        <div class="controls-row">
+          <div class="control-group" id="steerTouchZone">
+            <div class="key-pair">
+              <button type="button" class="key-btn" data-control="left" aria-label="Steer Left (A or Left Arrow)">◀ A</button>
+              <button type="button" class="key-btn" data-control="right" aria-label="Steer Right (D or Right Arrow)">D ▶</button>
+            </div>
+            <span class="control-caption">Steer Left / Right</span>
+          </div>
+
+          <div class="control-cluster">
+            <div class="control-group">
+              <button type="button" class="key-btn key-btn--gas" data-control="up" aria-label="Accelerate (W or Up Arrow)">▲ Gas</button>
+              <span class="control-caption">Accelerate</span>
+            </div>
+
+            <div class="control-group">
+              <button type="button" class="key-btn key-btn--brake" data-control="down" aria-label="Brake (S or Down Arrow)">▼ Brake</button>
+              <span class="control-caption">Brake</span>
+            </div>
+
+            <div class="control-group">
+              <button type="button" class="key-btn key-btn--wide" data-control="jump" aria-label="Jump (Spacebar)">⤒ Jump</button>
+              <span class="control-caption">Jump (Space)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="route-bar" aria-label="Quick Route Switcher">
+        <span class="route-bar-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+            <circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/>
+          </svg>
+          Routes:
+        </span>
+        <div id="quickRouteBar" class="route-pills" role="group" aria-label="Select racing route"></div>
+      </div>
+
       <div class="telemetry-grid">
         <div class="gauge-card">
-          <canvas id="speedoCanvas" width="260" height="165" aria-label="Speedometer gauge"></canvas>
+          <canvas id="speedoCanvas" width="140" height="86" aria-label="Compact speedometer gauge"></canvas>
         </div>
 
         <div class="stats-stack">
@@ -643,39 +925,6 @@
           </div>
         </div>
       </div>
-
-      <div class="controls-card">
-        <h2 class="controls-heading">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
-          </svg>
-          Controls
-        </h2>
-        <div class="controls-row">
-          <div class="control-group">
-            <div class="key-pair">
-              <button type="button" class="key-btn" data-control="left" aria-label="Steer Left (A or Left Arrow)">A / ←</button>
-              <button type="button" class="key-btn" data-control="right" aria-label="Steer Right (D or Right Arrow)">D / →</button>
-            </div>
-            <span class="control-caption">Steer</span>
-          </div>
-
-          <div class="control-group">
-            <button type="button" class="key-btn" data-control="up" aria-label="Accelerate (W or Up Arrow)">↑</button>
-            <span class="control-caption">Accelerate</span>
-          </div>
-
-          <div class="control-group">
-            <button type="button" class="key-btn" data-control="down" aria-label="Brake (S or Down Arrow)">↓</button>
-            <span class="control-caption">Brake / Jump</span>
-          </div>
-
-          <div class="control-group">
-            <button type="button" class="key-btn key-btn--wide" data-control="jump" aria-label="Jump (Spacebar)">Space</button>
-            <span class="control-caption">Jump</span>
-          </div>
-        </div>
-      </div>
     </section>
 
     <div id="liveAnnouncer" class="visually-hidden" aria-live="polite"></div>
@@ -696,6 +945,7 @@
       const hudPos = document.getElementById('hudPos');
       const hudLap = document.getElementById('hudLap');
       const hudSpeed = document.getElementById('hudSpeed');
+      const hudRouteBadge = document.getElementById('hudRouteBadge');
       const dashPos = document.getElementById('dashPos');
       const dashLap = document.getElementById('dashLap');
       const dashTime = document.getElementById('dashTime');
@@ -705,6 +955,7 @@
       const modalDesc = document.getElementById('modalDesc');
       const startBtn = document.getElementById('startBtn');
       const restartBtn = document.getElementById('restartBtn');
+      const routesMenuBtn = document.getElementById('routesMenuBtn');
       const soundToggleBtn = document.getElementById('soundToggleBtn');
       const soundLabel = document.getElementById('soundLabel');
       const countdownBanner = document.getElementById('countdownBanner');
@@ -725,6 +976,66 @@
       const NATURAL_DECEL = 2350;
       const OFFROAD_DECEL = 6800;
 
+      // --- 6 Distinct Routes --- sections: [length, curve, hill, isTunnel]
+      const MAPS = [
+        { name: 'Alpine Pass', shortName: '1. Alpine Pass', swatch: '#22c55e', skyTheme: 'alpine',
+          blurb: 'Pine forests, a sweeping alpine climb, a mid-lap route fork, and a stone mountain tunnel.',
+          sections: [[42, 0, 0], [52, 2.2, 680], [40, 0.4, 0, 1], [56, -2.7, -520], [44, 1.9, 420], [52, -1.6, 0], [38, 0, 0]],
+          trees: ['pineA', 'pineB'], rocks: true, ev: 3, floor: '#1b4325',
+          grass: ['#245830', '#1d4927'], shoulder: ['#57534e', '#44403c'], road: ['#384152', '#313948'],
+          edge: '#e2e8f0', lane: '#f8fafc' },
+        { name: 'Coastal Riviera', shortName: '2. Coastal Bay', swatch: '#06b6d4', skyTheme: 'coastal',
+          blurb: 'Sun-drenched turquoise bay, palm-lined coastal boulevards, and sweeping high-speed ocean cliffs.',
+          sections: [[46, 0, 0], [62, 1.4, 240], [48, 2.5, -200], [54, -1.9, 320], [58, 1.7, -260], [44, -1.2, 0], [40, 0, 0]],
+          trees: ['palm', 'palm'], rocks: true, ev: 4, floor: '#155e63',
+          grass: ['#2a786c', '#206358'], shoulder: ['#d6b888', '#c2a372'], road: ['#3b495e', '#323f52'],
+          edge: '#67e8f9', lane: '#f8fafc', tint: 'rgba(56, 189, 248, 0.05)' },
+        { name: 'Dragon Hairpins', shortName: '3. Hairpins', swatch: '#f43f5e', skyTheme: 'sunset',
+          blurb: 'Technical sunset touge with relentless S-curve switchbacks, steep ridge drops, and twin cliff tunnels.',
+          sections: [[34, 0, 0], [36, 3.3, 520], [36, -3.4, -440], [32, 2.7, 0, 1], [36, -3.3, -520], [36, 3.2, 480], [32, -2.5, 0, 1], [36, 2.3, -240], [32, 0, 0]],
+          trees: ['pineA', 'pineB'], rocks: true, ev: 3, floor: '#2b192e',
+          grass: ['#382039', '#2d182e'], shoulder: ['#57414d', '#46333e'], road: ['#2e293a', '#262130'],
+          edge: '#fda4af', lane: '#fde047', tint: 'rgba(244, 63, 94, 0.08)' },
+        { name: 'Red Rock Canyon', shortName: '4. Red Canyon', swatch: '#f97316', skyTheme: 'canyon',
+          blurb: 'Blazing sandstone mesas, saguaro cactus valleys, roller-coaster canyon dips, and big air ramps.',
+          sections: [[45, 0, 0], [58, 1.5, 520], [45, -2.3, -480], [42, 0.3, -380], [54, 2.7, 360], [50, -1.6, 520], [40, 0, 0]],
+          trees: ['cactus', 'cactus'], rocks: true, ev: 5, floor: '#b86b35',
+          grass: ['#c97a3e', '#b56931'], shoulder: ['#944e27', '#7f411f'], road: ['#47403b', '#3d3732'],
+          edge: '#fef3c7', lane: '#fde68a', tint: 'rgba(255, 150, 60, 0.08)' },
+        { name: 'Neon Cyber Loop', shortName: '5. Neon Night', swatch: '#a855f7', skyTheme: 'night',
+          blurb: 'Midnight cyber-expressway with glowing neon barriers, skyscraper skyline, and an illuminated light-tunnel.',
+          sections: [[42, 0, 0], [40, 2.2, 0], [40, -2.2, 0], [50, 0.2, 280, 1], [42, -3.0, -240], [42, 2.5, 0], [42, -1.1, 0], [34, 0, 0]],
+          trees: ['neonPylon', 'pineA'], rocks: false, ev: 4, floor: '#071422',
+          grass: ['#0a1b2e', '#071422'], shoulder: ['#1e1b4b', '#17153b'], road: ['#171c2e', '#121625'],
+          edge: '#22d3ee', lane: '#f0abfc', tint: 'rgba(8, 12, 42, 0.32)', night: 1 },
+        { name: 'Glacier Peak', shortName: '6. Glacier Peak', swatch: '#38bdf8', skyTheme: 'glacier',
+          blurb: 'Snow-covered high-altitude switchbacks, aurora sky, icy crests, and dual avalanche galleries.',
+          sections: [[40, 0, 0], [48, -2.0, 440], [38, 0.4, 0, 1], [52, 2.6, -480], [46, -2.5, 360], [36, 1.6, 0, 1], [44, -1.1, 0], [38, 0, 0]],
+          trees: ['snowPine', 'snowPine'], rocks: true, ev: 3, floor: '#cfe0f0',
+          grass: ['#dceaf7', '#cdddf0'], shoulder: ['#8496b0', '#73859e'], road: ['#424d60', '#394354'],
+          edge: '#ffffff', lane: '#bae6fd', tint: 'rgba(186, 230, 253, 0.12)' }
+      ];
+      let currentMap = 0;
+      let P = MAPS[0];
+
+      // --- Difficulties / Route Layout Modes ---
+      const DIFFS = [
+        { name: 'Flow Route (Easy)', tag: 'wider flowing turns, gentler hills & slower rivals', rival: 0.86,
+          haz: [0.18, 0.44, 0.68, 0.88],
+          route: s => s.map(([l, c, h, t]) => [Math.round(l * 1.15), c * 0.55, h * 0.55, t]) },
+        { name: 'GP Circuit (Normal)', tag: 'the championship route layout', rival: 1,
+          haz: [0.11, 0.24, 0.38, 0.56, 0.69, 0.81, 0.92],
+          route: s => s },
+        { name: 'Reverse Chicane (Hard)', tag: 'mirrored reverse route with tight hairpin chicane & fast rivals', rival: 1.06,
+          haz: [0.08, 0.17, 0.26, 0.35, 0.45, 0.55, 0.64, 0.73, 0.82, 0.9, 0.95],
+          route: s => {
+            const r = s.slice().reverse().map(([l, c, h, t]) => [Math.round(l * 0.9), -c * 1.32, -h * 1.25, t]);
+            r.splice(r.length - 1, 0, [22, 3.3, 0], [22, -3.3, 0], [22, 3.3, 0]);
+            return r;
+          } }
+      ];
+      let currentDiff = 1;
+
       // --- Game State ---
       const input = { left: false, right: false, up: false, down: false, jump: false };
       let segments = [];
@@ -733,6 +1044,9 @@
       let rivals = [];
       let obstacles = [];
       let particles = [];
+      let forkStartIdx = 0;
+      let forkEndIdx = 0;
+      let activeBranch = 'main'; // 'main' | 'left' | 'right'
 
       let gameState = 'menu'; // 'menu' | 'countdown' | 'racing' | 'finished'
       let countdownTimer = 0;
@@ -752,13 +1066,19 @@
       let currentRank = 1;
       let jumpCooldown = 0;
       let hitFlash = 0;
+      let boostTimer = 0;
       let wheelPhase = 0;
 
       // --- Pre-rendered Realistic Environment Assets (Offscreen Canvases) ---
       let skyPanoramaCanvas = null;
+      const skyCache = {};
       let pineSpriteA = null;
       let pineSpriteB = null;
+      let snowPineSprite = null;
+      let palmSprite = null;
+      let neonPylonSprite = null;
       let boulderSprite = null;
+      let cactusSprite = null;
 
       function seededRandom(seed) {
         let s = seed % 2147483647;
@@ -769,100 +1089,218 @@
         };
       }
 
-      // Pre-render realistic alpine mountain & volumetric cloud panorama (seamless 2048x360)
-      function buildEnvironmentAssets() {
+      function createCactusSprite(w, h) {
+        const c = document.createElement('canvas');
+        c.width = w;
+        c.height = h;
+        const g = c.getContext('2d');
+        g.lineCap = 'round';
+        g.lineJoin = 'round';
+        const limb = (pts, lw, col) => {
+          g.strokeStyle = col;
+          g.lineWidth = lw;
+          g.beginPath();
+          g.moveTo(pts[0], pts[1]);
+          for (let i = 2; i < pts.length; i += 2) g.lineTo(pts[i], pts[i + 1]);
+          g.stroke();
+        };
+        [[26, '#2f6b3a'], [15, '#3f8a4a'], [5, '#74c47b']].forEach(([lw, col]) => {
+          limb([w * 0.5, h * 0.98, w * 0.5, h * 0.08], lw, col);
+          limb([w * 0.5, h * 0.62, w * 0.22, h * 0.62, w * 0.22, h * 0.34], lw * 0.62, col);
+          limb([w * 0.5, h * 0.48, w * 0.78, h * 0.48, w * 0.78, h * 0.22], lw * 0.62, col);
+        });
+        return c;
+      }
+
+      function createPalmSprite(w, h) {
+        const c = document.createElement('canvas');
+        c.width = w;
+        c.height = h;
+        const g = c.getContext('2d');
+        const cx = w * 0.52;
+        const topX = w * 0.44;
+        const topY = h * 0.22;
+
+        // Curved trunk
+        g.lineCap = 'round';
+        g.strokeStyle = '#5c4028';
+        g.lineWidth = 14;
+        g.beginPath();
+        g.moveTo(cx, h * 0.96);
+        g.quadraticCurveTo(w * 0.38, h * 0.58, topX, topY);
+        g.stroke();
+
+        g.strokeStyle = '#855d3b';
+        g.lineWidth = 7;
+        g.beginPath();
+        g.moveTo(cx - 2, h * 0.95);
+        g.quadraticCurveTo(w * 0.37, h * 0.58, topX - 1, topY);
+        g.stroke();
+
+        // Palm fronds
+        const fronds = [
+          [-72, -12, -38, -28],
+          [-66, 22, -35, -6],
+          [-42, 48, -22, 12],
+          [68, -14, 34, -28],
+          [72, 20, 36, -6],
+          [46, 46, 22, 12],
+          [4, -52, 0, -28]
+        ];
+        fronds.forEach(([dx, dy, qx, qy], idx) => {
+          g.strokeStyle = idx % 2 === 0 ? '#15803d' : '#22c55e';
+          g.lineWidth = 9;
+          g.beginPath();
+          g.moveTo(topX, topY);
+          g.quadraticCurveTo(topX + qx, topY + qy, topX + dx, topY + dy);
+          g.stroke();
+        });
+        return c;
+      }
+
+      function createNeonPylonSprite(w, h) {
+        const c = document.createElement('canvas');
+        c.width = w;
+        c.height = h;
+        const g = c.getContext('2d');
+        const cx = w / 2;
+
+        // Metallic dark pylon post
+        g.fillStyle = '#0f172a';
+        g.fillRect(cx - 7, h * 0.1, 14, h * 0.86);
+
+        // Glowing cyan/magenta light bars
+        const glow = g.createRadialGradient(cx, h * 0.35, 4, cx, h * 0.35, 52);
+        glow.addColorStop(0, 'rgba(34, 211, 238, 0.85)');
+        glow.addColorStop(0.5, 'rgba(217, 70, 239, 0.35)');
+        glow.addColorStop(1, 'rgba(34, 211, 238, 0)');
+        g.fillStyle = glow;
+        g.fillRect(0, 0, w, h);
+
+        g.fillStyle = '#22d3ee';
+        g.fillRect(cx - 3, h * 0.14, 6, h * 0.55);
+        g.fillStyle = '#f0abfc';
+        g.fillRect(cx - 16, h * 0.16, 32, 6);
+        g.fillRect(cx - 12, h * 0.28, 24, 5);
+        return c;
+      }
+
+      function getSkyPanorama(theme = 'alpine') {
+        if (skyCache[theme]) return skyCache[theme];
         const PW = 2048;
         const PH = 360;
-        skyPanoramaCanvas = document.createElement('canvas');
-        skyPanoramaCanvas.width = PW;
-        skyPanoramaCanvas.height = PH;
-        const pCtx = skyPanoramaCanvas.getContext('2d');
-        const rng = seededRandom(4207);
+        const canvas = document.createElement('canvas');
+        canvas.width = PW;
+        canvas.height = PH;
+        const pCtx = canvas.getContext('2d');
+        const rng = seededRandom(4207 + theme.length * 97);
+
+        const palettes = {
+          alpine: {
+            sky: ['#0f3c8a', '#286ed6', '#69a9f5', '#bfdcf9', '#dcebf7'],
+            sun: ['rgba(255, 253, 235, 0.92)', 'rgba(254, 240, 195, 0.45)'],
+            far: ['#385076', '#5c7ba6'], mid: ['#283d58', '#42607c'],
+            snowAlpha: 0.95, treeA: '#183f25', treeB: '#215230'
+          },
+          coastal: {
+            sky: ['#0284c7', '#0ea5e9', '#38bdf8', '#bae6fd', '#fef9c3'],
+            sun: ['rgba(255, 251, 205, 0.96)', 'rgba(253, 224, 71, 0.48)'],
+            far: ['#0f766e', '#14b8a6'], mid: ['#0369a1', '#0284c7'],
+            snowAlpha: 0.2, treeA: '#0f5132', treeB: '#15803d', ocean: true
+          },
+          sunset: {
+            sky: ['#1e1b4b', '#581c87', '#be123c', '#f97316', '#fde047'],
+            sun: ['rgba(254, 240, 138, 0.95)', 'rgba(251, 113, 133, 0.55)'],
+            far: ['#3b0764', '#6b21a8'], mid: ['#2e1065', '#4c1d95'],
+            snowAlpha: 0.45, treeA: '#1f122b', treeB: '#2e1836'
+          },
+          canyon: {
+            sky: ['#7c2d12', '#c2410c', '#ea580c', '#fb923c', '#fed7aa'],
+            sun: ['rgba(255, 247, 214, 0.92)', 'rgba(251, 146, 60, 0.5)'],
+            far: ['#7c2d12', '#b45309'], mid: ['#6c240c', '#9a3412'],
+            snowAlpha: 0.0, treeA: '#78350f', treeB: '#92400e', mesa: true
+          },
+          night: {
+            sky: ['#020617', '#090d26', '#1e1b4b', '#311042', '#0f172a'],
+            sun: ['rgba(34, 211, 238, 0.45)', 'rgba(168, 85, 247, 0.25)'],
+            far: ['#0f172a', '#1e293b'], mid: ['#090d16', '#1e1b4b'],
+            snowAlpha: 0.2, treeA: '#090d16', treeB: '#111827', city: true
+          },
+          glacier: {
+            sky: ['#082f49', '#0369a1', '#38bdf8', '#bae6fd', '#f0f9ff'],
+            sun: ['rgba(240, 253, 250, 0.92)', 'rgba(125, 211, 252, 0.5)'],
+            far: ['#475569', '#94a3b8'], mid: ['#334155', '#64748b'],
+            snowAlpha: 1.0, treeA: '#cbd5e1', treeB: '#94a3b8'
+          }
+        };
+        const pal = palettes[theme] || palettes.alpine;
 
         // 1. Atmospheric sky gradient
         const skyG = pCtx.createLinearGradient(0, 0, 0, PH);
-        skyG.addColorStop(0, '#0f3c8a');
-        skyG.addColorStop(0.38, '#286ed6');
-        skyG.addColorStop(0.72, '#69a9f5');
-        skyG.addColorStop(0.92, '#bfdcf9');
-        skyG.addColorStop(1, '#dcebf7');
+        skyG.addColorStop(0, pal.sky[0]);
+        skyG.addColorStop(0.36, pal.sky[1]);
+        skyG.addColorStop(0.7, pal.sky[2]);
+        skyG.addColorStop(0.9, pal.sky[3]);
+        skyG.addColorStop(1, pal.sky[4]);
         pCtx.fillStyle = skyG;
         pCtx.fillRect(0, 0, PW, PH);
 
-        // Warm sun glow in upper sky
+        // Sun / Moon glow
         const sunX = PW * 0.62;
         const sunY = PH * 0.24;
         const sunG = pCtx.createRadialGradient(sunX, sunY, 8, sunX, sunY, 340);
-        sunG.addColorStop(0, 'rgba(255, 253, 235, 0.92)');
-        sunG.addColorStop(0.15, 'rgba(254, 240, 195, 0.45)');
-        sunG.addColorStop(0.5, 'rgba(186, 230, 253, 0.14)');
-        sunG.addColorStop(1, 'rgba(186, 230, 253, 0)');
+        sunG.addColorStop(0, pal.sun[0]);
+        sunG.addColorStop(0.25, pal.sun[1]);
+        sunG.addColorStop(1, 'rgba(0, 0, 0, 0)');
         pCtx.fillStyle = sunG;
         pCtx.fillRect(0, 0, PW, PH);
 
-        // 2. Volumetric Cumulus Clouds
-        function paintCloudCluster(cx, cy, scaleW, scaleH) {
-          for (let wrap of [0, -PW, PW]) {
-            const x0 = cx + wrap;
-            if (x0 + scaleW * 120 < 0 || x0 - scaleW * 120 > PW) continue;
-            // Cloud underside shadow
-            for (let i = 0; i < 16; i++) {
-              const ox = (rng() - 0.5) * 140 * scaleW;
-              const oy = (rng() * 0.35) * 42 * scaleH + 8;
-              const r = (20 + rng() * 28) * scaleW;
-              const cg = pCtx.createRadialGradient(x0 + ox, cy + oy - r * 0.3, r * 0.1, x0 + ox, cy + oy, r);
-              cg.addColorStop(0, 'rgba(195, 214, 238, 0.78)');
-              cg.addColorStop(0.65, 'rgba(148, 178, 216, 0.45)');
-              cg.addColorStop(1, 'rgba(148, 178, 216, 0)');
-              pCtx.fillStyle = cg;
-              pCtx.beginPath();
-              pCtx.arc(x0 + ox, cy + oy, r, 0, Math.PI * 2);
-              pCtx.fill();
-            }
-            // Sunlit cloud puffs
-            for (let i = 0; i < 22; i++) {
-              const ox = (rng() - 0.5) * 130 * scaleW;
-              const oy = (rng() - 0.55) * 44 * scaleH;
-              const r = (18 + rng() * 32) * scaleW;
-              const cg = pCtx.createRadialGradient(x0 + ox - r * 0.2, cy + oy - r * 0.25, r * 0.08, x0 + ox, cy + oy, r);
-              cg.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
-              cg.addColorStop(0.55, 'rgba(241, 247, 255, 0.65)');
-              cg.addColorStop(1, 'rgba(241, 247, 255, 0)');
-              pCtx.fillStyle = cg;
-              pCtx.beginPath();
-              pCtx.arc(x0 + ox, cy + oy, r, 0, Math.PI * 2);
-              pCtx.fill();
+        // 2. Clouds (for day/sunset/glacier themes)
+        if (!pal.city) {
+          for (let c = 0; c < 12; c++) {
+            const cx = (c / 12) * PW + rng() * 90;
+            const cy = 58 + rng() * 90;
+            const scaleW = 0.75 + rng() * 0.7;
+            const scaleH = 0.7 + rng() * 0.55;
+            for (const wrap of [0, -PW, PW]) {
+              const x0 = cx + wrap;
+              if (x0 + scaleW * 120 < 0 || x0 - scaleW * 120 > PW) continue;
+              for (let i = 0; i < 14; i++) {
+                const ox = (rng() - 0.5) * 125 * scaleW;
+                const oy = (rng() - 0.55) * 40 * scaleH;
+                const r = (18 + rng() * 28) * scaleW;
+                const cg = pCtx.createRadialGradient(x0 + ox, cy + oy, r * 0.1, x0 + ox, cy + oy, r);
+                cg.addColorStop(0, theme === 'sunset' ? 'rgba(254, 215, 170, 0.75)' : 'rgba(255, 255, 255, 0.88)');
+                cg.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                pCtx.fillStyle = cg;
+                pCtx.beginPath();
+                pCtx.arc(x0 + ox, cy + oy, r, 0, Math.PI * 2);
+                pCtx.fill();
+              }
             }
           }
         }
 
-        for (let c = 0; c < 14; c++) {
-          paintCloudCluster((c / 14) * PW + rng() * 90, 58 + rng() * 95, 0.75 + rng() * 0.75, 0.7 + rng() * 0.6);
-        }
-
-        // 3. Distant Snow-Capped Alpine Range
+        // 3. Distant Range / Skyline / Ocean
         const steps = 256;
         const farPeaks = [];
         const midPeaks = [];
         for (let i = 0; i <= steps; i++) {
           const t = (i / steps) * Math.PI * 2;
-          const hFar =
-            Math.sin(t * 3) * 58 +
-            Math.cos(t * 7 + 1.2) * 38 +
-            Math.sin(t * 15 + 0.5) * 18 +
-            Math.cos(t * 31) * 8 +
-            Math.sin(t * 63) * 3.5;
-          farPeaks.push(PH - 142 - Math.abs(hFar));
-
-          const hMid =
-            Math.sin(t * 4 + 2.1) * 46 +
-            Math.cos(t * 9 + 0.4) * 28 +
-            Math.sin(t * 19 + 1.7) * 14 +
-            Math.cos(t * 39) * 5;
-          midPeaks.push(PH - 88 - Math.abs(hMid));
+          let hFar = Math.sin(t * 3) * 58 + Math.cos(t * 7 + 1.2) * 38 + Math.sin(t * 15 + 0.5) * 18;
+          let hMid = Math.sin(t * 4 + 2.1) * 46 + Math.cos(t * 9 + 0.4) * 28 + Math.sin(t * 19 + 1.7) * 14;
+          if (pal.mesa) {
+            // Flat-topped canyon mesas
+            hFar = Math.min(72, Math.round(Math.abs(hFar) / 24) * 24);
+            hMid = Math.min(54, Math.round(Math.abs(hMid) / 18) * 18);
+          } else if (pal.ocean) {
+            hFar = Math.abs(hFar) * 0.42;
+            hMid = Math.abs(hMid) * 0.25;
+          }
+          farPeaks.push(PH - 138 - Math.abs(hFar));
+          midPeaks.push(PH - 86 - Math.abs(hMid));
         }
 
-        // Render Mountain Range with sunlit left slopes and shadowed right facets
         function renderMountainLayer(heights, baseDark, baseLight, snowThreshold, snowAlpha) {
           const dx = PW / steps;
           for (let i = 0; i < steps; i++) {
@@ -870,14 +1308,10 @@
             const x2 = (i + 1) * dx;
             const y1 = heights[i];
             const y2 = heights[i + 1];
-            const slope = y2 - y1; // negative = rising toward right (sunlit), positive = falling (shadowed)
-            const isSunlit = slope < 0.4;
-
-            // Main rock face column
+            const isSunlit = (y2 - y1) < 0.4;
             const rockG = pCtx.createLinearGradient(x1, Math.min(y1, y2), x1, PH);
             rockG.addColorStop(0, isSunlit ? baseLight : baseDark);
-            rockG.addColorStop(0.65, baseDark);
-            rockG.addColorStop(1, '#263c32');
+            rockG.addColorStop(1, baseDark);
             pCtx.fillStyle = rockG;
             pCtx.beginPath();
             pCtx.moveTo(x1, y1);
@@ -887,15 +1321,10 @@
             pCtx.closePath();
             pCtx.fill();
 
-            // Snow cap & ridge gullies
             const avgY = (y1 + y2) * 0.5;
-            if (avgY < snowThreshold) {
-              const snowDepth = (snowThreshold - avgY) * (isSunlit ? 1.35 : 0.95) + (rng() * 14);
-              const snowG = pCtx.createLinearGradient(x1, avgY, x1, avgY + snowDepth);
-              snowG.addColorStop(0, isSunlit ? `rgba(255, 255, 255, ${snowAlpha})` : `rgba(198, 220, 246, ${snowAlpha * 0.9})`);
-              snowG.addColorStop(0.7, isSunlit ? 'rgba(226, 238, 252, 0.55)' : 'rgba(142, 172, 212, 0.45)');
-              snowG.addColorStop(1, 'rgba(142, 172, 212, 0)');
-              pCtx.fillStyle = snowG;
+            if (snowAlpha > 0 && avgY < snowThreshold) {
+              const snowDepth = (snowThreshold - avgY) * 1.15 + rng() * 12;
+              pCtx.fillStyle = `rgba(255, 255, 255, ${snowAlpha * 0.75})`;
               pCtx.beginPath();
               pCtx.moveTo(x1, y1);
               pCtx.lineTo(x2 + 0.8, y2);
@@ -907,38 +1336,65 @@
           }
         }
 
-        renderMountainLayer(farPeaks, '#385076', '#5c7ba6', PH - 148, 0.95);
-        renderMountainLayer(midPeaks, '#283d58', '#42607c', PH - 115, 0.65);
+        renderMountainLayer(farPeaks, pal.far[0], pal.far[1], PH - 140, pal.snowAlpha);
+        renderMountainLayer(midPeaks, pal.mid[0], pal.mid[1], PH - 108, pal.snowAlpha * 0.7);
 
-        // Atmospheric valley mist
-        const mistG = pCtx.createLinearGradient(0, PH - 95, 0, PH);
-        mistG.addColorStop(0, 'rgba(186, 218, 245, 0)');
-        mistG.addColorStop(0.55, 'rgba(176, 208, 235, 0.28)');
-        mistG.addColorStop(1, 'rgba(34, 68, 44, 0.88)');
-        pCtx.fillStyle = mistG;
-        pCtx.fillRect(0, PH - 95, PW, 95);
-
-        // Foothill forest treeline along bottom of panorama
-        for (let i = 0; i < 420; i++) {
-          const tx = (i / 420) * PW;
-          const th = 18 + rng() * 32;
-          const ty = PH - (rng() * 14);
-          pCtx.fillStyle = i % 2 === 0 ? '#183f25' : '#215230';
-          pCtx.beginPath();
-          pCtx.moveTo(tx, ty - th);
-          pCtx.lineTo(tx - th * 0.35, ty);
-          pCtx.lineTo(tx + th * 0.35, ty);
-          pCtx.closePath();
-          pCtx.fill();
+        if (pal.ocean) {
+          // Shimmering turquoise sea along the horizon
+          const seaG = pCtx.createLinearGradient(0, PH - 68, 0, PH);
+          seaG.addColorStop(0, '#0284c7');
+          seaG.addColorStop(0.5, '#06b6d4');
+          seaG.addColorStop(1, '#0f766e');
+          pCtx.fillStyle = seaG;
+          pCtx.fillRect(0, PH - 68, PW, 68);
         }
 
-        // 4. Pre-render Realistic Pine Tree Sprites
-        pineSpriteA = createRealisticPineSprite(180, 260, 101);
-        pineSpriteB = createRealisticPineSprite(180, 260, 209);
-        boulderSprite = createRealisticBoulderSprite(140, 100, 307);
+        if (pal.city) {
+          // Cyberpunk skyscraper silhouette & glowing neon windows
+          for (let b = 0; b < 90; b++) {
+            const bx = (b / 90) * PW;
+            const bw = 16 + (b % 5) * 6;
+            const bh = 40 + ((b * 37) % 110);
+            pCtx.fillStyle = b % 2 === 0 ? '#090d1e' : '#111827';
+            pCtx.fillRect(bx, PH - bh, bw, bh);
+            pCtx.fillStyle = b % 3 === 0 ? 'rgba(34, 211, 238, 0.75)' : 'rgba(240, 171, 252, 0.7)';
+            for (let wy = PH - bh + 8; wy < PH - 10; wy += 10) {
+              pCtx.fillRect(bx + 3, wy, bw - 6, 3);
+            }
+          }
+        } else {
+          // Horizon treeline
+          for (let i = 0; i < 360; i++) {
+            const tx = (i / 360) * PW;
+            const th = 16 + rng() * 28;
+            const ty = PH - (rng() * 10);
+            pCtx.fillStyle = i % 2 === 0 ? pal.treeA : pal.treeB;
+            pCtx.beginPath();
+            pCtx.moveTo(tx, ty - th);
+            pCtx.lineTo(tx - th * 0.35, ty);
+            pCtx.lineTo(tx + th * 0.35, ty);
+            pCtx.closePath();
+            pCtx.fill();
+          }
+        }
+
+        skyCache[theme] = canvas;
+        return canvas;
       }
 
-      function createRealisticPineSprite(w, h, seed) {
+      // Pre-render realistic environment sprites & initial sky panorama
+      function buildEnvironmentAssets() {
+        pineSpriteA = createRealisticPineSprite(180, 260, 101, false);
+        pineSpriteB = createRealisticPineSprite(180, 260, 209, false);
+        snowPineSprite = createRealisticPineSprite(180, 260, 315, true);
+        palmSprite = createPalmSprite(180, 260);
+        neonPylonSprite = createNeonPylonSprite(180, 260);
+        boulderSprite = createRealisticBoulderSprite(140, 100, 307);
+        cactusSprite = createCactusSprite(180, 260);
+        skyPanoramaCanvas = getSkyPanorama(P.skyTheme);
+      }
+
+      function createRealisticPineSprite(w, h, seed, snowy = false) {
         const c = document.createElement('canvas');
         c.width = w;
         c.height = h;
@@ -978,20 +1434,16 @@
           const tierSpan = (w * 0.42) * (1 - progress * 0.78) + 8;
           const tierH = (h * 0.19) * (1 - progress * 0.42);
 
-          // Deep shadow foliage layer
-          g.fillStyle = '#0d2916';
+          g.fillStyle = snowy ? '#1e3a3a' : '#0d2916';
           drawFoliageBough(g, cx, tierY + 5, tierSpan * 1.02, tierH, rng, 11);
 
-          // Mid forest green layer
-          g.fillStyle = '#164625';
+          g.fillStyle = snowy ? '#335c57' : '#164625';
           drawFoliageBough(g, cx, tierY, tierSpan * 0.96, tierH * 0.9, rng, 10);
 
-          // Sunlit upper-left needle highlights
-          g.fillStyle = '#2d7a3e';
+          g.fillStyle = snowy ? '#cbd5e1' : '#2d7a3e';
           drawFoliageBough(g, cx - tierSpan * 0.08, tierY - 3, tierSpan * 0.78, tierH * 0.72, rng, 8);
 
-          // Warm golden-green tips
-          g.fillStyle = 'rgba(74, 158, 72, 0.72)';
+          g.fillStyle = snowy ? 'rgba(248, 250, 252, 0.9)' : 'rgba(74, 158, 72, 0.72)';
           drawFoliageBough(g, cx - tierSpan * 0.12, tierY - 5, tierSpan * 0.52, tierH * 0.5, rng, 6);
         }
 
@@ -1145,27 +1597,30 @@
               p1: { world: { x: 0, y: y1, z: n * SEGMENT_LEN }, camera: {}, screen: {} },
               p2: { world: { x: 0, y: y2, z: (n + 1) * SEGMENT_LEN }, camera: {}, screen: {} },
               curve,
+              baseCurve: curve,
               isTunnel,
               isTunnelEntrance: isTunnel && i === 0,
               isFinish: n >= 1 && n <= 2,
+              isForkSplitter: false,
+              isForkZone: false,
               color: Math.floor(n / 3) % 2 === 0 ? 'light' : 'dark',
               scenery: []
             };
 
             if (!isTunnel) {
-              if (n % 3 === 0) {
+              if (n % P.ev === 0) {
                 seg.scenery.push({
-                  type: n % 2 === 0 ? 'pineA' : 'pineB',
+                  type: P.trees[n % 2],
                   offset: -1.55 - (n % 4) * 0.32,
                   scale: 0.95 + (n % 3) * 0.22
                 });
                 seg.scenery.push({
-                  type: (n + 1) % 2 === 0 ? 'pineA' : 'pineB',
+                  type: P.trees[(n + 1) % 2],
                   offset: 1.55 + ((n + 2) % 4) * 0.32,
                   scale: 0.95 + ((n + 1) % 3) * 0.22
                 });
               }
-              if (n % 7 === 0) {
+              if (P.rocks && n % 7 === 0) {
                 seg.scenery.push({
                   type: 'boulder',
                   offset: (n % 2 === 0 ? -1 : 1) * (1.35 + (n % 3) * 0.25),
@@ -1177,19 +1632,29 @@
           }
         }
 
-        // Scenic Alpine Highway with S-curves, elevation changes, and Stone Mountain Tunnel
-        addSection(45, 0, 0, false);          // Start/Finish straight
-        addSection(55, 2.2, 680, false);     // Sweeping right uphill pass
-        addSection(42, 0.4, 0, true);        // Stone mountain tunnel!
-        addSection(60, -2.7, -520, false);   // Fast left downhill S-curve
-        addSection(45, 1.9, 420, false);     // Forested right bend
-        addSection(55, -1.6, 0, false);      // Long left valley sweeper
-        addSection(40, 0, 0, false);         // Final sprint straight
+        P = MAPS[currentMap];
+        skyPanoramaCanvas = getSkyPanorama(P.skyTheme);
+        DIFFS[currentDiff].route(P.sections).forEach(([len, curve, hill, tun]) => addSection(len, curve, hill, !!tun));
 
         trackLength = segments.length * SEGMENT_LEN;
 
-        const hazardSegs = [38, 82, 134, 180, 226, 274, 314];
+        // Mid-lap Split Route Fork (Speed Lane Left vs Jump Shortcut Right)
+        forkStartIdx = Math.floor(segments.length * 0.43);
+        forkEndIdx = Math.min(segments.length - 12, forkStartIdx + 32);
+        for (let k = forkStartIdx - 6; k < forkEndIdx; k++) {
+          if (segments[k]) {
+            if (k >= forkStartIdx - 5 && k <= forkStartIdx + 1) {
+              segments[k].isForkSplitter = true;
+            }
+            if (k >= forkStartIdx && k <= forkEndIdx) {
+              segments[k].isForkZone = true;
+            }
+          }
+        }
+
+        const hazardSegs = DIFFS[currentDiff].haz.map(f => Math.round(f * segments.length));
         hazardSegs.forEach((idx, i) => {
+          if (idx >= forkStartIdx - 4 && idx <= forkEndIdx + 2) return;
           const isRamp = i % 2 === 0;
           obstacles.push({
             segIndex: idx,
@@ -1200,15 +1665,60 @@
           });
         });
 
-        // Precompute closed-loop minimap coordinates
+        // Fork Branch Obstacles: Left Lane = Turbo Boost Pads, Right Lane = Air Ramps
+        [forkStartIdx + 5, forkStartIdx + 14, forkStartIdx + 23].forEach(idx => {
+          if (idx < segments.length) {
+            obstacles.push({
+              segIndex: idx,
+              z: idx * SEGMENT_LEN,
+              x: -0.52,
+              type: 'boost',
+              width: 0.42
+            });
+            obstacles.push({
+              segIndex: idx + 1,
+              z: (idx + 1) * SEGMENT_LEN,
+              x: 0.52,
+              type: 'ramp',
+              width: 0.42
+            });
+          }
+        });
+
+        // Precompute closed-loop 2D circuit minimap coordinates
         minimapPoints = [];
+        const stepIndices = [];
+        for (let i = 0; i < segments.length; i += 2) stepIndices.push(i);
+        const N = stepIndices.length || 1;
+        let totalCurveDeflection = 0;
+        stepIndices.forEach(i => {
+          totalCurveDeflection += segments[i].curve * 0.017;
+        });
+        const baseTurnPerStep = (Math.PI * 2 - totalCurveDeflection) / N;
+
         let mx = 0, my = 0, angle = -Math.PI / 2;
-        for (let i = 0; i < segments.length; i += 2) {
-          angle += segments[i].curve * 0.0155;
-          mx += Math.cos(angle) * 2.2;
-          my += Math.sin(angle) * 2.2;
-          minimapPoints.push({ x: mx, y: my, isTunnel: segments[i].isTunnel });
-        }
+        stepIndices.forEach((segIdx, k) => {
+          angle += baseTurnPerStep + segments[segIdx].curve * 0.017;
+          mx += Math.cos(angle) * 2.5;
+          my += Math.sin(angle) * 2.5;
+          minimapPoints.push({
+            x: mx,
+            y: my,
+            segIdx,
+            isTunnel: segments[segIdx].isTunnel,
+            isFork: segments[segIdx].isForkZone
+          });
+        });
+
+        // Smoothly close the loop drift so start and finish meet seamlessly
+        const endX = mx;
+        const endY = my;
+        minimapPoints.forEach((p, k) => {
+          const frac = (k + 1) / N;
+          p.x -= endX * frac;
+          p.y -= endY * frac;
+        });
+
         let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
         minimapPoints.forEach(p => {
           if (p.x < minX) minX = p.x;
@@ -1217,7 +1727,7 @@
           if (p.y > maxY) maxY = p.y;
         });
         const span = Math.max(maxX - minX, maxY - minY) || 1;
-        const pad = 16;
+        const pad = 13;
         const size = 98 - pad * 2;
         minimapPoints.forEach(p => {
           p.nx = pad + ((p.x - minX) / span) * size + (size - ((maxX - minX) / span) * size) / 2;
@@ -1245,7 +1755,7 @@
             totalZ: startZ,
             x: (idx % 2 === 0 ? -0.44 : 0.44) * (0.72 + (idx % 3) * 0.14),
             targetX: (idx % 2 === 0 ? -0.42 : 0.42),
-            baseSpeed: MAX_SPEED_WORLD * (0.76 + idx * 0.041),
+            baseSpeed: MAX_SPEED_WORLD * (0.76 + idx * 0.041) * DIFFS[currentDiff].rival,
             speed: 0,
             lean: 0
           };
@@ -1266,6 +1776,8 @@
         raceTime = 0;
         jumpCooldown = 0;
         hitFlash = 0;
+        boostTimer = 0;
+        activeBranch = 'main';
         particles = [];
         spawnRivals();
         updateHUD();
@@ -1289,13 +1801,13 @@
       // --- Projection Helper ---
       function project(p, camX, camY, camZ, width, height) {
         const dz = p.world.z - camZ;
+        p.camera.z = dz;
         if (dz <= 1) {
           p.screen.scale = 0;
           return;
         }
         p.camera.x = p.world.x - camX;
         p.camera.y = p.world.y - camY;
-        p.camera.z = dz;
         p.screen.scale = CAMERA_DEPTH / dz;
         p.screen.x = Math.round(width / 2 + p.screen.scale * p.camera.x * width / 2);
         p.screen.y = Math.round(height / 2 - p.screen.scale * p.camera.y * height / 2);
@@ -1337,10 +1849,11 @@
         wheelPhase += (speed / MAX_SPEED_WORLD) * dt * 45;
         if (jumpCooldown > 0) jumpCooldown -= dt;
         if (hitFlash > 0) hitFlash -= dt;
+        if (boostTimer > 0) boostTimer -= dt;
 
         // Player acceleration & braking
-        if (input.up) {
-          speed += ACCEL * dt;
+        if (input.up || boostTimer > 0) {
+          speed += (boostTimer > 0 ? ACCEL * 1.45 : ACCEL) * dt;
         } else if (input.down) {
           speed -= BRAKE_DECEL * dt;
         } else {
@@ -1353,7 +1866,8 @@
           speed = Math.min(speed, MAX_SPEED_WORLD * 0.58);
         }
 
-        speed = Math.max(0, Math.min(MAX_SPEED_WORLD, speed));
+        const maxCap = boostTimer > 0 ? MAX_SPEED_WORLD * 1.08 : MAX_SPEED_WORLD;
+        speed = Math.max(0, Math.min(maxCap, speed));
 
         // Steering & centrifugal curve pull
         const speedRatio = speed / MAX_SPEED_WORLD;
@@ -1409,7 +1923,7 @@
             life: 0.24,
             maxLife: 0.24,
             size: 4 + Math.random() * 6,
-            color: speed > MAX_SPEED_WORLD * 0.8 ? 'rgba(56, 189, 248, 0.5)' : 'rgba(148, 163, 184, 0.25)'
+            color: (speed > MAX_SPEED_WORLD * 0.8 || boostTimer > 0) ? 'rgba(56, 189, 248, 0.55)' : 'rgba(148, 163, 184, 0.25)'
           });
         }
 
@@ -1429,18 +1943,38 @@
         const newLap = Math.min(TOTAL_LAPS, Math.floor(playerTotalZ / trackLength) + 1);
         if (newLap > currentLap) {
           currentLap = newLap;
+          activeBranch = 'main';
           playTone(660, 0.2, 'triangle', 0.14);
           announce(`Lap ${currentLap} of ${TOTAL_LAPS}`);
         }
 
-        // Check obstacles (ramps & cones)
+        // Track Fork Branch Selection & Dynamic Curve Shaping
         const currentSegIdx = baseSeg.index;
+        if (currentSegIdx >= forkStartIdx && currentSegIdx <= forkStartIdx + 3 && activeBranch === 'main') {
+          activeBranch = playerX < 0 ? 'left' : 'right';
+          for (let k = forkStartIdx; k <= forkEndIdx; k++) {
+            if (segments[k]) {
+              segments[k].curve = activeBranch === 'left'
+                ? segments[k].baseCurve * 0.55
+                : -segments[k].baseCurve * 0.85;
+            }
+          }
+          announce(activeBranch === 'left' ? 'Left Speed Route selected' : 'Right Jump Route selected');
+        } else if (currentSegIdx > forkEndIdx && activeBranch !== 'main') {
+          activeBranch = 'main';
+        }
+
+        // Check obstacles (ramps, turbo boost pads & cones)
         for (const obs of obstacles) {
           if (Math.abs(obs.segIndex - currentSegIdx) <= 1 && Math.abs(playerX - obs.x) < obs.width) {
             if (obs.type === 'ramp' && playerY < 60) {
               playerVy = 1520;
-              speed = Math.min(MAX_SPEED_WORLD, speed + 1450);
+              speed = Math.min(MAX_SPEED_WORLD * 1.05, speed + 1500);
               playTone(520, 0.18, 'triangle', 0.13);
+            } else if (obs.type === 'boost' && playerY < 45) {
+              boostTimer = 0.65;
+              speed = Math.min(MAX_SPEED_WORLD * 1.08, speed + 1850);
+              playTone(720, 0.15, 'sine', 0.12);
             } else if (obs.type === 'cone' && playerY < 45 && hitFlash <= 0) {
               speed *= 0.62;
               hitFlash = 0.55;
@@ -1492,7 +2026,7 @@
           updateEngineSound();
           playTone(784, 0.35, 'triangle', 0.18);
           modalTitle.textContent = `FINISHED — ${ordinal(currentRank)} PLACE!`;
-          modalDesc.textContent = `Total Race Time: ${formatTime(raceTime)}. Ready for another run?`;
+          modalDesc.textContent = `${P.name} (${DIFFS[currentDiff].name}) completed in ${formatTime(raceTime)}. Pick another route below or race again!`;
           startBtn.textContent = 'Race Again';
           raceModal.hidden = false;
           announce(`Race finished! You placed ${ordinal(currentRank)} in ${formatTime(raceTime)}.`);
@@ -1520,8 +2054,17 @@
       function updateHUD() {
         const kmh = Math.round((speed / MAX_SPEED_WORLD) * 200);
         hudPos.textContent = currentRank;
-        hudLap.textContent = `${currentLap} / ${TOTAL_LAPS}`;
+        hudLap.textContent = `${currentLap}/${TOTAL_LAPS}`;
         hudSpeed.textContent = kmh;
+
+        if (hudRouteBadge) {
+          const branchText = activeBranch === 'left'
+            ? ' · ◀ Speed Branch'
+            : activeBranch === 'right'
+              ? ' · Jump Branch ▶'
+              : '';
+          hudRouteBadge.textContent = `Route ${currentMap + 1}: ${P.name}${branchText}`;
+        }
 
         dashPos.textContent = `${currentRank} / 6`;
         dashLap.textContent = `${currentLap} / ${TOTAL_LAPS}`;
@@ -1552,14 +2095,26 @@
         }
         const panOffset = ((skyHeading % skyPanoramaCanvas.width) + skyPanoramaCanvas.width) % skyPanoramaCanvas.width;
 
-        // 1. Draw Pre-rendered Realistic Sky, Volumetric Clouds & Snow-Capped Mountains
+        // 1. Draw Pre-rendered Realistic Sky, Volumetric Clouds & Route Horizon
         ctx.drawImage(skyPanoramaCanvas, panOffset, 0, skyPanoramaCanvas.width - panOffset, skyPanoramaCanvas.height, 0, 0, W * ((skyPanoramaCanvas.width - panOffset) / skyPanoramaCanvas.width), horizonY + 14);
         if (panOffset > 0) {
           ctx.drawImage(skyPanoramaCanvas, 0, 0, panOffset, skyPanoramaCanvas.height, W * ((skyPanoramaCanvas.width - panOffset) / skyPanoramaCanvas.width) - 1, 0, W * (panOffset / skyPanoramaCanvas.width) + 2, horizonY + 14);
         }
 
+        if (P.wash) {
+          ctx.fillStyle = P.wash;
+          ctx.fillRect(0, 0, W, horizonY + 14);
+        }
+        if (P.night) {
+          ctx.fillStyle = '#ffffff';
+          for (let k = 0; k < 70; k++) {
+            const sz = k % 5 === 0 ? 2 : 1;
+            ctx.fillRect((k * 337) % W, (k * 89) % (horizonY - 40), sz, sz);
+          }
+        }
+
         // Base valley floor
-        ctx.fillStyle = '#1b4325';
+        ctx.fillStyle = P.floor;
         ctx.fillRect(0, horizonY, W, H - horizonY);
 
         // 2. Project Road Segments from Camera Origin
@@ -1605,20 +2160,20 @@
           if (seg.isTunnel) {
             ctx.fillStyle = isLight ? '#141c2b' : '#0f1623';
           } else {
-            ctx.fillStyle = isLight ? '#245830' : '#1d4927';
+            ctx.fillStyle = P.grass[isLight ? 0 : 1];
           }
           ctx.fillRect(0, p2.y, W, p1.y - p2.y);
 
           // Gravel Shoulder outside road
           const sh1 = p1.w * 1.24;
           const sh2 = p2.w * 1.24;
-          ctx.fillStyle = seg.isTunnel ? '#1e293b' : (isLight ? '#57534e' : '#44403c');
+          ctx.fillStyle = seg.isTunnel ? '#1e293b' : P.shoulder[isLight ? 0 : 1];
           drawQuad(p1.x - sh1, p1.y, p1.x + sh1, p1.y, p2.x + sh2, p2.y, p2.x - sh2, p2.y);
 
           // Main Asphalt Surface
           ctx.fillStyle = seg.isTunnel
             ? (isLight ? '#222d3f' : '#1b2535')
-            : (isLight ? '#384152' : '#313948');
+            : P.road[isLight ? 0 : 1];
           drawQuad(p1.x - p1.w, p1.y, p1.x + p1.w, p1.y, p2.x + p2.w, p2.y, p2.x - p2.w, p2.y);
 
           // Subtle Specular Sun Sheen & Tire Wear Tracks on Asphalt
@@ -1626,6 +2181,19 @@
           const sheenW2 = p2.w * 0.22;
           ctx.fillStyle = seg.isTunnel ? 'rgba(253, 224, 71, 0.05)' : 'rgba(226, 232, 240, 0.06)';
           drawQuad(p1.x - sheenW1, p1.y, p1.x + sheenW1, p1.y, p2.x + sheenW2, p2.y, p2.x - sheenW2, p2.y);
+
+          // Fork Splitter Painted Island in Center of Road
+          if (seg.isForkSplitter) {
+            const fw1 = p1.w * 0.14;
+            const fw2 = p2.w * 0.14;
+            ctx.fillStyle = isLight ? '#facc15' : '#0f172a';
+            drawQuad(p1.x - fw1, p1.y, p1.x + fw1, p1.y, p2.x + fw2, p2.y, p2.x - fw2, p2.y);
+          } else if (seg.isForkZone && isLight) {
+            const divW1 = Math.max(2, p1.w * 0.032);
+            const divW2 = Math.max(1.5, p2.w * 0.032);
+            ctx.fillStyle = '#38bdf8';
+            drawQuad(p1.x - divW1, p1.y, p1.x + divW1, p1.y, p2.x + divW2, p2.y, p2.x - divW2, p2.y);
+          }
 
           // Tire tracks in the 3 lanes
           ctx.fillStyle = 'rgba(15, 23, 42, 0.18)';
@@ -1640,7 +2208,7 @@
           // Continuous White Edge Lines
           const edgeW1 = Math.max(1.5, p1.w * 0.022);
           const edgeW2 = Math.max(1.2, p2.w * 0.022);
-          ctx.fillStyle = '#e2e8f0';
+          ctx.fillStyle = P.edge;
           for (const side of [-0.95, 0.95]) {
             const ex1 = p1.x + p1.w * side;
             const ex2 = p2.x + p2.w * side;
@@ -1651,7 +2219,7 @@
           if (isLight) {
             const lw1 = Math.max(1.5, p1.w * 0.022);
             const lw2 = Math.max(1.2, p2.w * 0.022);
-            ctx.fillStyle = '#f8fafc';
+            ctx.fillStyle = P.lane;
             for (const lane of [-0.33, 0.33]) {
               const lx1 = p1.x + p1.w * lane;
               const lx2 = p2.x + p2.w * lane;
@@ -1684,7 +2252,7 @@
             drawStoneTunnelSegment(seg, p1, p2, W);
           }
 
-          // Roadside Pine Trees & Boulders
+          // Roadside Trees, Palms, Snow Pines, Neon Pylons & Boulders
           for (const item of seg.scenery) {
             const sx = p1.x + p1.w * item.offset;
             if (item.type === 'boulder') {
@@ -1694,7 +2262,17 @@
                 ctx.drawImage(boulderSprite, sx - bw / 2, p1.y - bh * 0.88, bw, bh);
               }
             } else {
-              const sprite = item.type === 'pineA' ? pineSpriteA : pineSpriteB;
+              const sprite = item.type === 'cactus'
+                ? cactusSprite
+                : item.type === 'palm'
+                  ? palmSprite
+                  : item.type === 'snowPine'
+                    ? snowPineSprite
+                    : item.type === 'neonPylon'
+                      ? neonPylonSprite
+                      : item.type === 'pineA'
+                        ? pineSpriteA
+                        : pineSpriteB;
               const treeH = p1.w * 0.96 * item.scale;
               const treeW = treeH * (180 / 260);
               if (treeH > 5) {
@@ -1703,9 +2281,11 @@
             }
           }
 
-          // Start/Finish Gantry
+          // Start/Finish Gantry & Mid-Lap Route Fork Sign Gantry
           if (seg.index === 2) {
             drawFinishGantry(p1.x, p1.y, p1.w * 1.15);
+          } else if (seg.index === forkStartIdx) {
+            drawForkGantry(p1.x, p1.y, p1.w * 1.15);
           }
 
           // Obstacles on this segment
@@ -1716,6 +2296,8 @@
               if (ow > 3) {
                 if (obs.type === 'ramp') {
                   drawRamp(ox, p1.y, ow);
+                } else if (obs.type === 'boost') {
+                  drawBoostPad(ox, p1.y, ow);
                 } else {
                   drawCone(ox, p1.y, ow * 0.55);
                 }
@@ -1728,7 +2310,6 @@
             const rSegIdx = Math.floor(r.z / SEGMENT_LEN);
             if (rSegIdx === seg.index) {
               const relZ = ((r.z - playerZ) % trackLength + trackLength) % trackLength;
-              // Only render rivals that are at or ahead of the player
               if (relZ <= DRAW_DISTANCE * SEGMENT_LEN) {
                 const rPercent = (r.z % SEGMENT_LEN) / SEGMENT_LEN;
                 const rRoadX = p1.x + (p2.x - p1.x) * rPercent;
@@ -1757,6 +2338,27 @@
           }
         }
 
+        // Map atmosphere (haze / dusk / night) and night headlight beam
+        if (P.tint) {
+          ctx.fillStyle = P.tint;
+          ctx.fillRect(0, 0, W, H);
+        }
+        if (P.night) {
+          const beam = ctx.createLinearGradient(0, H, 0, horizonY);
+          beam.addColorStop(0, 'rgba(255, 244, 200, 0.42)');
+          beam.addColorStop(1, 'rgba(255, 244, 200, 0)');
+          ctx.globalCompositeOperation = 'lighter';
+          ctx.fillStyle = beam;
+          ctx.beginPath();
+          ctx.moveTo(W / 2 - 70, H);
+          ctx.lineTo(W / 2 + 70, H);
+          ctx.lineTo(W / 2 + 240, horizonY + 10);
+          ctx.lineTo(W / 2 - 240, horizonY + 10);
+          ctx.closePath();
+          ctx.fill();
+          ctx.globalCompositeOperation = 'source-over';
+        }
+
         // 4. Exhaust & Tire Particles
         for (const pt of particles) {
           ctx.globalAlpha = Math.max(0, pt.life / pt.maxLife);
@@ -1768,9 +2370,9 @@
         ctx.globalAlpha = 1;
 
         // 5. High-Speed Wind Lines
-        if (speed > MAX_SPEED_WORLD * 0.72 && gameState === 'racing') {
-          const intensity = (speed / MAX_SPEED_WORLD - 0.72) / 0.28;
-          ctx.strokeStyle = `rgba(226, 232, 240, ${0.18 * intensity})`;
+        if ((speed > MAX_SPEED_WORLD * 0.72 || boostTimer > 0) && gameState === 'racing') {
+          const intensity = boostTimer > 0 ? 1 : (speed / MAX_SPEED_WORLD - 0.72) / 0.28;
+          ctx.strokeStyle = `rgba(226, 232, 240, ${0.2 * intensity})`;
           ctx.lineWidth = 1.5;
           for (let w = 0; w < 8; w++) {
             const angle = (w / 8) * Math.PI + ((raceTime * 9 + w) % 0.6);
@@ -1801,7 +2403,7 @@
             steerLean,
             riderHangOff,
             playerY * 0.16,
-            speed > MAX_SPEED_WORLD * 0.78,
+            speed > MAX_SPEED_WORLD * 0.78 || boostTimer > 0,
             input.down
           );
         }
@@ -2435,6 +3037,40 @@
         ctx.fillText('APEX MOTO GP', x, y - h + Math.max(8, h * 0.18));
       }
 
+      function drawForkGantry(x, y, halfW) {
+        if (halfW < 10) return;
+        const h = halfW * 0.64;
+        const pillarW = Math.max(3, halfW * 0.055);
+        const bannerH = Math.max(8, h * 0.26);
+
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(x - halfW, y - h, pillarW, h);
+        ctx.fillRect(x + halfW - pillarW, y - h, pillarW, h);
+
+        // Left branch sign (Speed Lane)
+        ctx.fillStyle = '#082f49';
+        ctx.fillRect(x - halfW, y - h, halfW - 2, bannerH);
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = Math.max(1, halfW * 0.015);
+        ctx.strokeRect(x - halfW, y - h, halfW - 2, bannerH);
+
+        // Right branch sign (Jump Route)
+        ctx.fillStyle = '#422006';
+        ctx.fillRect(x + 2, y - h, halfW - 2, bannerH);
+        ctx.strokeStyle = '#facc15';
+        ctx.strokeRect(x + 2, y - h, halfW - 2, bannerH);
+
+        if (halfW > 45) {
+          const fontSize = Math.max(8, Math.round(h * 0.13));
+          ctx.font = `bold ${fontSize}px system-ui, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.fillStyle = '#38bdf8';
+          ctx.fillText('◀ SPEED LANE', x - halfW * 0.5, y - h + bannerH * 0.68);
+          ctx.fillStyle = '#facc15';
+          ctx.fillText('JUMP ROUTE ▶', x + halfW * 0.5, y - h + bannerH * 0.68);
+        }
+      }
+
       function drawRamp(x, y, w) {
         const rGrad = ctx.createLinearGradient(x, y - w * 0.24, x, y);
         rGrad.addColorStop(0, '#facc15');
@@ -2451,6 +3087,31 @@
         // Chevron stripes
         ctx.strokeStyle = '#0f172a';
         ctx.lineWidth = Math.max(1.5, w * 0.04);
+        ctx.stroke();
+      }
+
+      function drawBoostPad(x, y, w) {
+        const h = Math.max(3, w * 0.18);
+        const bGrad = ctx.createLinearGradient(x, y - h, x, y);
+        bGrad.addColorStop(0, '#67e8f9');
+        bGrad.addColorStop(0.5, '#06b6d4');
+        bGrad.addColorStop(1, '#0e7490');
+        ctx.fillStyle = bGrad;
+        ctx.beginPath();
+        ctx.moveTo(x - w * 0.5, y);
+        ctx.lineTo(x + w * 0.5, y);
+        ctx.lineTo(x + w * 0.42, y - h);
+        ctx.lineTo(x - w * 0.42, y - h);
+        ctx.closePath();
+        ctx.fill();
+
+        // Glowing chevron arrow on boost pad
+        ctx.strokeStyle = '#ecfeff';
+        ctx.lineWidth = Math.max(1.5, w * 0.045);
+        ctx.beginPath();
+        ctx.moveTo(x - w * 0.24, y - h * 0.22);
+        ctx.lineTo(x, y - h * 0.78);
+        ctx.lineTo(x + w * 0.24, y - h * 0.22);
         ctx.stroke();
       }
 
@@ -2471,8 +3132,8 @@
         const W = speedoCanvas.width;
         const H = speedoCanvas.height;
         const cx = W / 2;
-        const cy = H - 22;
-        const radius = 98;
+        const cy = H - 14;
+        const radius = Math.min(cx - 10, cy - 8);
 
         sCtx.clearRect(0, 0, W, H);
 
@@ -2481,7 +3142,7 @@
         const totalA = endA - startA;
 
         // Background track
-        sCtx.lineWidth = 14;
+        sCtx.lineWidth = 8;
         sCtx.lineCap = 'round';
         sCtx.strokeStyle = '#1e293b';
         sCtx.beginPath();
@@ -2503,10 +3164,10 @@
         for (let val = 0; val <= 200; val += 10) {
           const a = startA + (val / 200) * totalA;
           const isMajor = val % 50 === 0;
-          const rOuter = radius - 6;
-          const rInner = isMajor ? radius - 16 : radius - 11;
+          const rOuter = radius - 4;
+          const rInner = isMajor ? radius - 10 : radius - 7;
           sCtx.strokeStyle = isMajor ? '#f8fafc' : '#64748b';
-          sCtx.lineWidth = isMajor ? 2.2 : 1.2;
+          sCtx.lineWidth = isMajor ? 1.6 : 1;
           sCtx.beginPath();
           sCtx.moveTo(cx + Math.cos(a) * rInner, cy + Math.sin(a) * rInner);
           sCtx.lineTo(cx + Math.cos(a) * rOuter, cy + Math.sin(a) * rOuter);
@@ -2514,11 +3175,11 @@
 
           if (isMajor) {
             sCtx.fillStyle = '#cbd5e1';
-            sCtx.font = 'bold 12px system-ui, sans-serif';
+            sCtx.font = 'bold 8px system-ui, sans-serif';
             sCtx.textAlign = 'center';
             sCtx.textBaseline = 'middle';
-            const tx = cx + Math.cos(a) * (radius - 27);
-            const ty = cy + Math.sin(a) * (radius - 27);
+            const tx = cx + Math.cos(a) * (radius - 16);
+            const ty = cy + Math.sin(a) * (radius - 16);
             sCtx.fillText(String(val), tx, ty);
           }
         }
@@ -2530,9 +3191,9 @@
         sCtx.rotate(needleA);
         sCtx.fillStyle = '#ef4444';
         sCtx.beginPath();
-        sCtx.moveTo(-6, -4);
-        sCtx.lineTo(radius - 12, 0);
-        sCtx.lineTo(-6, 4);
+        sCtx.moveTo(-4, -2.5);
+        sCtx.lineTo(radius - 8, 0);
+        sCtx.lineTo(-4, 2.5);
         sCtx.closePath();
         sCtx.fill();
         sCtx.restore();
@@ -2540,17 +3201,17 @@
         // Center hub cap
         sCtx.fillStyle = '#334155';
         sCtx.beginPath();
-        sCtx.arc(cx, cy, 8, 0, Math.PI * 2);
+        sCtx.arc(cx, cy, 4.5, 0, Math.PI * 2);
         sCtx.fill();
 
         // Digital Readout
         sCtx.fillStyle = '#f8fafc';
-        sCtx.font = 'italic 800 32px system-ui, sans-serif';
+        sCtx.font = 'italic 800 18px system-ui, sans-serif';
         sCtx.textAlign = 'center';
-        sCtx.fillText(String(kmh), cx, cy - 22);
+        sCtx.fillText(String(kmh), cx, cy - 11);
         sCtx.fillStyle = '#94a3b8';
-        sCtx.font = '600 13px system-ui, sans-serif';
-        sCtx.fillText('km/h', cx, cy + 2);
+        sCtx.font = '600 9px system-ui, sans-serif';
+        sCtx.fillText('km/h', cx, cy + 9);
       }
 
       // --- Circular Minimap ---
@@ -2574,7 +3235,7 @@
         mCtx.stroke();
 
         // Highlight progress along current lap in green
-        const pIdx = Math.floor(((playerZ / trackLength) * minimapPoints.length)) % minimapPoints.length;
+        const pIdx = ((Math.floor((playerZ / trackLength) * minimapPoints.length) % minimapPoints.length) + minimapPoints.length) % minimapPoints.length;
         if (pIdx > 1) {
           mCtx.strokeStyle = '#22c55e';
           mCtx.lineWidth = 4.5;
@@ -2589,8 +3250,9 @@
 
         // Rival dots
         for (const r of rivals) {
-          const rIdx = Math.floor(((r.z / trackLength) * minimapPoints.length)) % minimapPoints.length;
+          const rIdx = ((Math.floor((r.z / trackLength) * minimapPoints.length) % minimapPoints.length) + minimapPoints.length) % minimapPoints.length;
           const pt = minimapPoints[rIdx];
+          if (!pt) continue;
           mCtx.fillStyle = r.bodyColor;
           mCtx.beginPath();
           mCtx.arc(pt.nx, pt.ny, 3.2, 0, Math.PI * 2);
@@ -2599,13 +3261,15 @@
 
         // Player dot
         const pPt = minimapPoints[pIdx];
-        mCtx.fillStyle = '#ef4444';
-        mCtx.strokeStyle = '#ffffff';
-        mCtx.lineWidth = 1.8;
-        mCtx.beginPath();
-        mCtx.arc(pPt.nx, pPt.ny, 4.8, 0, Math.PI * 2);
-        mCtx.fill();
-        mCtx.stroke();
+        if (pPt) {
+          mCtx.fillStyle = '#ef4444';
+          mCtx.strokeStyle = '#ffffff';
+          mCtx.lineWidth = 1.8;
+          mCtx.beginPath();
+          mCtx.arc(pPt.nx, pPt.ny, 4.8, 0, Math.PI * 2);
+          mCtx.fill();
+          mCtx.stroke();
+        }
       }
 
       // --- Input Handling ---
@@ -2625,6 +3289,12 @@
       }
 
       window.addEventListener('keydown', (e) => {
+        if (e.code === 'KeyM' && (gameState === 'menu' || gameState === 'finished')) {
+          selectMap(currentMap + 1);
+        }
+        if (e.code === 'KeyN' && !e.repeat && (gameState === 'menu' || gameState === 'finished')) {
+          selectDiff(currentDiff + 1);
+        }
         const action = keyMap[e.code];
         if (action) {
           if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
@@ -2662,6 +3332,67 @@
         btn.addEventListener('pointercancel', release);
       });
 
+      const mapPicker = document.getElementById('mapPicker');
+      const quickRouteBar = document.getElementById('quickRouteBar');
+      MAPS.forEach((m, i) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'map-btn';
+        const swatch = document.createElement('span');
+        swatch.className = 'route-swatch';
+        swatch.style.background = m.swatch;
+        b.append(swatch, document.createTextNode(m.name));
+        b.addEventListener('click', () => selectMap(i));
+        mapPicker.appendChild(b);
+
+        if (quickRouteBar) {
+          const qb = document.createElement('button');
+          qb.type = 'button';
+          qb.className = 'route-pill-btn';
+          const qSwatch = document.createElement('span');
+          qSwatch.className = 'route-swatch';
+          qSwatch.style.background = m.swatch;
+          qb.append(qSwatch, document.createTextNode(m.shortName));
+          qb.addEventListener('click', () => {
+            const wasRacing = gameState === 'racing' || gameState === 'countdown';
+            selectMap(i);
+            if (wasRacing) resetRace(true);
+          });
+          quickRouteBar.appendChild(qb);
+        }
+      });
+
+      const diffPicker = document.getElementById('diffPicker');
+      DIFFS.forEach((d, i) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'map-btn';
+        b.textContent = d.name;
+        b.addEventListener('click', () => selectDiff(i));
+        diffPicker.appendChild(b);
+      });
+      function selectDiff(i) {
+        currentDiff = ((i % DIFFS.length) + DIFFS.length) % DIFFS.length;
+        selectMap(currentMap, true);
+        announce(`Difficulty selected: ${DIFFS[currentDiff].name}`);
+      }
+
+      function selectMap(i, silent) {
+        currentMap = ((i % MAPS.length) + MAPS.length) % MAPS.length;
+        skyHeading = 0;
+        buildTrack();
+        resetRace(false);
+        modalTitle.textContent = 'APEX MOTO GP';
+        modalDesc.textContent = `${P.name} · ${DIFFS[currentDiff].name} (${DIFFS[currentDiff].tag}): ${P.blurb} Steer with A/D or Arrows, accelerate with W/Up, brake with S/Down, and jump ramps and hazards with Space.`;
+        startBtn.textContent = 'Start Race';
+        [...mapPicker.children].forEach((b, k) => b.setAttribute('aria-pressed', String(k === currentMap)));
+        [...diffPicker.children].forEach((b, k) => b.setAttribute('aria-pressed', String(k === currentDiff)));
+        if (quickRouteBar) {
+          [...quickRouteBar.children].forEach((b, k) => b.setAttribute('aria-pressed', String(k === currentMap)));
+        }
+        if (!silent) announce(`Map selected: ${P.name}`);
+      }
+
       startBtn.addEventListener('click', () => {
         resetRace(true);
       });
@@ -2669,6 +3400,13 @@
       restartBtn.addEventListener('click', () => {
         resetRace(true);
       });
+
+      if (routesMenuBtn) {
+        routesMenuBtn.addEventListener('click', () => {
+          resetRace(false);
+          updateEngineSound();
+        });
+      }
 
       soundToggleBtn.addEventListener('click', () => {
         soundEnabled = !soundEnabled;
@@ -2692,8 +3430,7 @@
       }
 
       buildEnvironmentAssets();
-      buildTrack();
-      resetRace(false);
+      selectMap(0, true);
       requestAnimationFrame(loop);
     })();
   </script>
